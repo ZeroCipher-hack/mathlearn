@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Kitoblar — MathLearn{% endblock %}
+{% block nav_book %}active{% endblock %}
+{% block page_title %}<i class="fas fa-book me-2 text-danger"></i>Kitoblar{% endblock %}
+
+{% block content %}
+<div class="card-custom mb-4">
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'book_list' %}" class="btn {% if not selected_category %}btn-danger{% else %}btn-outline-secondary{% endif %} btn-sm rounded-pill">Barchasi</a>
+        {% for cat in categories %}
+        <a href="?category={{ cat.id }}" class="btn {% if selected_category == cat.id %}btn-danger{% else %}btn-outline-secondary{% endif %} btn-sm rounded-pill">{{ cat.name }}</a>
+        {% endfor %}
+    </div>
+</div>
+
+{% if books %}
+<div class="row g-4">
+    {% for book in books %}
+    <div class="col-md-3">
+        <div class="card-custom p-0" style="overflow:hidden;transition:transform 0.3s;"
+             onmouseover="this.style.transform='translateY(-5px)'"
+             onmouseout="this.style.transform='translateY(0)'">
+            <div style="background:linear-gradient(135deg,#1a1a2e,#0f3460);height:160px;display:flex;align-items:center;justify-content:center;">
+                {% if book.cover %}
+                    <img src="{{ book.cover.url }}" style="height:160px;width:100%;object-fit:cover;">
+                {% else %}
+                    <i class="fas fa-book" style="font-size:60px;color:rgba(255,255,255,0.3);"></i>
+                {% endif %}
+            </div>
+            <div style="padding:16px;">
+                <h6 style="color:#1a1a2e;font-weight:700;margin-bottom:4px;">{{ book.title }}</h6>
+                <p style="color:#888;font-size:12px;margin-bottom:8px;"><i class="fas fa-user me-1"></i>{{ book.author }}</p>
+                <p style="color:#666;font-size:13px;margin-bottom:12px;">{{ book.description|truncatechars:60 }}</p>
+                <a href="{{ book.pdf_file.url }}" target="_blank" class="btn btn-sm w-100" style="background:#fff0f3;color:#e94560;border-radius:8px;font-weight:600;">
+                    <i class="fas fa-download me-1"></i>Yuklab olish
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card-custom text-center py-5">
+    <i class="fas fa-book" style="font-size:64px;color:#ddd;margin-bottom:20px;display:block;"></i>
+    <h5 style="color:#aaa;">Hali kitoblar mavjud emas</h5>
+    {% if request.user.is_teacher %}
+    <a href="{% url 'book_upload' %}" class="btn-primary-custom btn mt-3">
+        <i class="fas fa-upload me-2"></i>Kitob yuklash
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

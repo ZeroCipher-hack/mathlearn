@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Formulalar — MathLearn{% endblock %}
+{% block nav_formula %}active{% endblock %}
+{% block page_title %}<i class="fas fa-square-root-alt me-2 text-danger"></i>Formulalar{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="card-custom mb-4">
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'formula_list' %}" class="btn btn-danger btn-sm rounded-pill">Barchasi</a>
+        {% for cat in categories %}
+        <a href="?category={{ cat.id }}" class="btn btn-outline-secondary btn-sm rounded-pill">{{ cat.name }}</a>
+        {% endfor %}
+    </div>
+</div>
+
+{% if formulas %}
+<div class="row g-4">
+    {% for formula in formulas %}
+    <div class="col-md-6">
+        <div class="card-custom" style="transition:transform 0.3s;"
+             onmouseover="this.style.transform='translateY(-3px)'"
+             onmouseout="this.style.transform='translateY(0)'">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <h6 style="color:#1a1a2e;font-weight:700;margin:0;">{{ formula.title }}</h6>
+                {% if formula.category %}
+                <span class="badge" style="background:#fff0f3;color:#e94560;">{{ formula.category.name }}</span>
+                {% endif %}
+            </div>
+            <div style="background:#f8f9ff;border-radius:12px;padding:20px;text-align:center;margin-bottom:12px;font-size:20px;" class="formula-render" data-formula="{{ formula.content }}">
+                {{ formula.content }}
+            </div>
+            {% if formula.description %}
+            <p style="color:#666;font-size:13px;margin:0;line-height:1.6;">{{ formula.description }}</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card-custom text-center py-5">
+    <i class="fas fa-square-root-alt" style="font-size:64px;color:#ddd;margin-bottom:20px;display:block;"></i>
+    <h5 style="color:#aaa;">Hali formulalar mavjud emas</h5>
+    {% if request.user.is_teacher %}
+    <a href="{% url 'formula_add' %}" class="btn-primary-custom btn mt-3">
+        <i class="fas fa-plus me-2"></i>Formula qo'shish
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+<script>
+document.querySelectorAll('.formula-render').forEach(el => {
+    try {
+        katex.render(el.dataset.formula, el, { throwOnError: false, displayMode: true });
+    } catch(e) {}
+});
+</script>
+{% endblock %}

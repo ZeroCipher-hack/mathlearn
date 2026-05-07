@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}Formula qo'shish — MathLearn{% endblock %}
+{% block nav_formula %}active{% endblock %}
+{% block page_title %}<i class="fas fa-plus-circle me-2 text-danger"></i>Formula qo'shish{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card-custom">
+            <h6><i class="fas fa-plus-circle me-2 text-danger"></i>Yangi formula</h6>
+            <form method="POST">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label style="font-weight:600;font-size:14px;color:#1a1a2e;">Formula nomi *</label>
+                        <input type="text" name="title" class="form-control mt-1" placeholder="Masalan: Pifagor teoremasi" required style="border-radius:10px;border:1.5px solid #e0e0e0;padding:10px 14px;">
+                    </div>
+                    <div class="col-md-6">
+                        <label style="font-weight:600;font-size:14px;color:#1a1a2e;">Kategoriya</label>
+                        <select name="category" class="form-select mt-1" style="border-radius:10px;border:1.5px solid #e0e0e0;padding:10px 14px;">
+                            <option value="">— Tanlang —</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label style="font-weight:600;font-size:14px;color:#1a1a2e;">Formula (LaTeX) *</label>
+                        <input type="text" name="content" id="formulaInput" class="form-control mt-1"
+                               placeholder="Masalan: a^2 + b^2 = c^2" required
+                               style="border-radius:10px;border:1.5px solid #e0e0e0;padding:10px 14px;font-family:monospace;"
+                               oninput="previewFormula(this.value)">
+                        <small style="color:#888;font-size:12px;">LaTeX formatida kiriting</small>
+                    </div>
+                    <div class="col-12">
+                        <label style="font-weight:600;font-size:14px;color:#1a1a2e;">Ko'rinishi:</label>
+                        <div id="preview" style="background:#f8f9ff;border-radius:12px;padding:20px;text-align:center;font-size:22px;min-height:70px;margin-top:8px;"></div>
+                    </div>
+                    <div class="col-12">
+                        <label style="font-weight:600;font-size:14px;color:#1a1a2e;">Tushuntirish</label>
+                        <textarea name="description" class="form-control mt-1" rows="3"
+                                  placeholder="Formula nima uchun ishlatiladi..."
+                                  style="border-radius:10px;border:1.5px solid #e0e0e0;padding:10px 14px;"></textarea>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input type="checkbox" name="is_published" class="form-check-input" id="published" checked>
+                            <label class="form-check-label" for="published" style="font-weight:600;color:#1a1a2e;">Darhol nashr qilish</label>
+                        </div>
+                    </div>
+                    <div class="col-12 d-flex gap-3">
+                        <button type="submit" class="btn-primary-custom btn">
+                            <i class="fas fa-save me-2"></i>Saqlash
+                        </button>
+                        <a href="{% url 'formula_list' %}" class="btn btn-outline-secondary" style="border-radius:10px;">Bekor qilish</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+<script>
+function previewFormula(val) {
+    const el = document.getElementById('preview');
+    try {
+        katex.render(val, el, { throwOnError: false, displayMode: true });
+    } catch(e) {
+        el.textContent = val;
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Kitob yuklash — MathLearn{% endblock %}
+{% block nav_book %}active{% endblock %}
+{% block page_title %}<i class="fas fa-book-medical me-2 text-danger"></i>Kitob yuklash{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card-custom">
+            <h6><i class="fas fa-upload me-2 text-danger"></i>Yangi kitob qo'shish</h6>
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label style="font-weight:600;font-size:14px;color:#1a1a2e;">Kitob nomi *</label>
+                        <input type="text" name="title" class="form-control mt-1" placeholder="Kitob nomini kiriting" required style="border-radius:10px;border:1.5px solid #e0e0e0;padding:10px 14px;">
+                    </div>
+                    <div class="col-md-6">
+                        <label style="font-weight:600;font-size:14px;color:#1a1a2e;">Muallif *</label>
+                        <input type="text" name="author" class="form-control mt-1" placeholder="Muallif ismi" required style="border-radius:10px;border:1.5px solid #e0e0e0;padding:10px 14px;">
+                    </div>
+                    <div class="col-12">
+                        <label style="font-weight:600;font-size:14px;color:#1a1a2e;">Tavsif</label>
+                        <textarea name="description" class="form-control mt-1" rows="3" placeholder="Kitob haqida qisqacha..." style="border-radius:10px;border:1.5px solid #e0e0e0;padding:10px 14px;"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label style="font-weight:600;font-size:14px;color:#1a1a2e;">Kategoriya</label>
+                        <select name="category" class="form-select mt-1" style="border-radius:10px;border:1.5px solid #e0e0e0;padding:10px 14px;">
+                            <option value="">— Tanlang —</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label style="font-weight:600;font-size:14px;color:#1a1a2e;">Muqova rasmi</label>
+                        <input type="file" name="cover" class="form-control mt-1" accept="image/*" style="border-radius:10px;border:1.5px solid #e0e0e0;padding:10px 14px;">
+                    </div>
+                    <div class="col-12">
+                        <label style="font-weight:600;font-size:14px;color:#1a1a2e;">PDF fayl *</label>
+                        <input type="file" name="pdf_file" class="form-control mt-1" accept=".pdf" required style="border-radius:10px;border:1.5px solid #e0e0e0;padding:10px 14px;">
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input type="checkbox" name="is_published" class="form-check-input" id="published" checked>
+                            <label class="form-check-label" for="published" style="font-weight:600;color:#1a1a2e;">Darhol nashr qilish</label>
+                        </div>
+                    </div>
+                    <div class="col-12 d-flex gap-3">
+                        <button type="submit" class="btn-primary-custom btn">
+                            <i class="fas fa-upload me-2"></i>Yuklash
+                        </button>
+                        <a href="{% url 'book_list' %}" class="btn btn-outline-secondary" style="border-radius:10px;">Bekor qilish</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

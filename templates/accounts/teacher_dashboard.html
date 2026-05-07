@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block title %}O'qituvchi paneli — MathLearn{% endblock %}
+{% block nav_home %}active{% endblock %}
+{% block page_title %}<i class="fas fa-chalkboard-teacher me-2" style="color:#0f3460;"></i>Bosh sahifa{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card-custom">
+            <div style="width:52px;height:52px;border-radius:14px;background:#e8f4fd;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:15px;">
+                <i class="fas fa-users" style="color:#0288d1;"></i>
+            </div>
+            <h3 style="font-size:28px;font-weight:700;margin:0;color:#0f3460;">{{ total_students }}</h3>
+            <p style="color:#888;font-size:13px;margin:5px 0 0;">Jami o'quvchilar</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card-custom">
+            <div style="width:52px;height:52px;border-radius:14px;background:#f0fff4;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:15px;">
+                <i class="fas fa-video" style="color:#28a745;"></i>
+            </div>
+            <h3 style="font-size:28px;font-weight:700;margin:0;color:#0f3460;">{{ total_videos }}</h3>
+            <p style="color:#888;font-size:13px;margin:5px 0 0;">Yuklangan darslar</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card-custom">
+            <div style="width:52px;height:52px;border-radius:14px;background:#fffbf0;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:15px;">
+                <i class="fas fa-tasks" style="color:#fd7e14;"></i>
+            </div>
+            <h3 style="font-size:28px;font-weight:700;margin:0;color:#0f3460;">{{ total_tests }}</h3>
+            <p style="color:#888;font-size:13px;margin:5px 0 0;">Berilgan testlar</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card-custom">
+            <div style="width:52px;height:52px;border-radius:14px;background:#fff0f3;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:15px;">
+                <i class="fas fa-clipboard-check" style="color:#e94560;"></i>
+            </div>
+            <h3 style="font-size:28px;font-weight:700;margin:0;color:#0f3460;">{{ pending_homework }}</h3>
+            <p style="color:#888;font-size:13px;margin:5px 0 0;">Tekshirilmagan vazifalar</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card-custom">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0"><i class="fas fa-video me-2" style="color:#0288d1;"></i>So'nggi darslarim</h6>
+                <a href="{% url 'video_upload' %}" class="btn-primary-custom btn">
+                    <i class="fas fa-plus me-1"></i>Yangi dars
+                </a>
+            </div>
+            {% if my_videos %}
+                {% for video in my_videos %}
+                <div style="display:flex;align-items:center;gap:15px;padding:12px 0;border-bottom:1px solid #f0f2f5;">
+                    <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#4fc3f7,#0f3460);display:flex;align-items:center;justify-content:center;color:white;font-size:20px;flex-shrink:0;">
+                        <i class="fas fa-play"></i>
+                    </div>
+                    <div style="flex:1;">
+                        <div style="font-weight:600;color:#1a1a2e;font-size:14px;">{{ video.title }}</div>
+                        <div style="font-size:12px;color:#888;">
+                            <i class="fas fa-eye me-1"></i>{{ video.views }} ko'rish ·
+                            {% if video.is_published %}
+                                <span style="color:#28a745;">Nashr qilingan</span>
+                            {% else %}
+                                <span style="color:#fd7e14;">Kutmoqda</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <a href="{% url 'video_detail' video.pk %}" class="btn btn-sm" style="background:#e8f4fd;color:#0288d1;border-radius:8px;">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align:center;padding:40px;color:#ccc;">
+                    <i class="fas fa-video" style="font-size:48px;margin-bottom:15px;display:block;"></i>
+                    Hali darslar yuklanmagan
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card-custom mb-4">
+            <h6><i class="fas fa-users me-2" style="color:#0288d1;"></i>So'nggi o'quvchilar</h6>
+            {% if recent_students %}
+                {% for student in recent_students %}
+                <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0f2f5;">
+                    <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4fc3f7,#0f3460);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;">
+                        {{ student.username|first|upper }}
+                    </div>
+                    <div>
+                        <div style="font-weight:600;font-size:13px;color:#1a1a2e;">{{ student.get_full_name|default:student.username }}</div>
+                        <div style="font-size:11px;color:#888;">{{ student.date_joined|date:"d.m.Y" }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align:center;padding:20px;color:#ccc;">
+                    <i class="fas fa-users" style="font-size:32px;margin-bottom:10px;display:block;"></i>
+                    Hali o'quvchilar yo'q
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="card-custom">
+            <h6><i class="fas fa-bolt me-2 text-warning"></i>Tezkor harakatlar</h6>
+            <div class="d-grid gap-2">
+                <a href="{% url 'video_upload' %}" class="btn" style="background:#e8f4fd;color:#0288d1;border-radius:10px;font-size:14px;text-align:left;padding:10px 15px;">
+                    <i class="fas fa-upload me-2"></i>Video yuklash
+                </a>
+                <a href="{% url 'book_upload' %}" class="btn" style="background:#f0fff4;color:#28a745;border-radius:10px;font-size:14px;text-align:left;padding:10px 15px;">
+                    <i class="fas fa-book-medical me-2"></i>Kitob yuklash
+                </a>
+                <a href="{% url 'formula_add' %}" class="btn" style="background:#fff0f3;color:#e94560;border-radius:10px;font-size:14px;text-align:left;padding:10px 15px;">
+                    <i class="fas fa-plus-circle me-2"></i>Formula qo'shish
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

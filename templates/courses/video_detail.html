@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}{{ video.title }} — MathLearn{% endblock %}
+{% block nav_video %}active{% endblock %}
+{% block page_title %}<i class="fas fa-play-circle me-2 text-danger"></i>{{ video.title }}{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card-custom p-0" style="overflow:hidden;">
+            <video controls style="width:100%;max-height:450px;background:#000;" id="mainVideo">
+                <source src="{{ video.video_file.url }}">
+                Brauzeringiz video formatini qo'llab-quvvatlamaydi.
+            </video>
+            <div style="padding:20px;">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h5 style="font-weight:700;color:#1a1a2e;margin-bottom:6px;">{{ video.title }}</h5>
+                        <div style="font-size:13px;color:#888;">
+                            <i class="fas fa-eye me-1"></i>{{ video.views }} ko'rish ·
+                            <i class="fas fa-clock ms-2 me-1"></i>{{ video.get_duration_display }} ·
+                            <i class="fas fa-calendar ms-2 me-1"></i>{{ video.created_at|date:"d.m.Y" }}
+                        </div>
+                    </div>
+                    {% if video.category %}
+                    <span class="badge" style="background:#fff0f3;color:#e94560;font-size:13px;padding:6px 12px;">
+                        {{ video.category.name }}
+                    </span>
+                    {% endif %}
+                </div>
+                {% if video.description %}
+                <hr style="border-color:#f0f2f5;">
+                <p style="color:#555;line-height:1.7;">{{ video.description }}</p>
+                {% endif %}
+                <div style="background:#f8f9ff;border-radius:12px;padding:14px;" class="d-flex align-items-center gap-3">
+                    <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#e94560,#0f3460);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;">
+                        {{ video.teacher.username|first|upper }}
+                    </div>
+                    <div>
+                        <div style="font-weight:600;color:#1a1a2e;font-size:14px;">{{ video.teacher.get_full_name|default:video.teacher.username }}</div>
+                        <div style="font-size:12px;color:#888;">O'qituvchi</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card-custom mb-4">
+            <h6><i class="fas fa-robot me-2" style="color:#6f42c1;"></i>AI Mentor</h6>
+            <p style="font-size:13px;color:#888;margin-bottom:12px;">Bu dars bo'yicha savolingiz bormi?</p>
+            <textarea id="aiQuestion" class="form-control mb-2" rows="3" placeholder="Savolingizni yozing..." style="border-radius:10px;border:1.5px solid #e0e0e0;font-size:13px;resize:none;"></textarea>
+            <button onclick="askAI()" class="btn-primary-custom btn w-100" style="font-size:13px;">
+                <i class="fas fa-paper-plane me-2"></i>Savol berish
+            </button>
+            <div id="aiAnswer" style="display:none;margin-top:12px;background:#f8f9ff;border-radius:10px;padding:14px;font-size:13px;color:#333;line-height:1.7;"></div>
+        </div>
+
+        {% if related %}
+        <div class="card-custom">
+            <h6><i class="fas fa-list me-2 text-danger"></i>O'xshash darslar</h6>
+            {% for r in related %}
+            <a href="{% url 'video_detail' r.pk %}" style="text-decoration:none;">
+                <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #f0f2f5;align-items:center;">
+                    <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#e94560,#0f3460);display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;">
+                        <i class="fas fa-play" style="font-size:14px;"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:600;color:#1a1a2e;font-size:13px;">{{ r.title }}</div>
+                        <div style="font-size:11px;color:#888;"><i class="fas fa-eye me-1"></i>{{ r.views }}</div>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function askAI() {
+    const q = document.getElementById('aiQuestion').value.trim();
+    if (!q) return;
+    const ansDiv = document.getElementById('aiAnswer');
+    ansDiv.style.display = 'block';
+    ansDiv.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Javob tayyorlanmoqda...';
+
+    const res = await fetch('/ai/ask/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+        body: JSON.stringify({question: q, video_title: '{{ video.title }}'})
+    });
+    const data = await res.json();
+    ansDiv.innerHTML = '<i class="fas fa-robot me-2" style="color:#6f42c1;"></i>' + data.answer;
+}
+</script>
+{% endblock %}
