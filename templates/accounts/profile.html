@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% block title %}Profil — MathLearn{% endblock %}
+{% block page_title %}<i class="fas fa-user me-2 text-danger"></i>Shaxsiy kabinet{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Chap: profil kartasi -->
+    <div class="col-md-4">
+        <div class="card-custom text-center">
+            <!-- Avatar -->
+            <div style="position:relative;display:inline-block;margin-bottom:16px;">
+                {% if request.user.avatar %}
+                    <img src="{{ request.user.avatar.url }}"
+                         style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:4px solid #e94560;">
+                {% else %}
+                    <div style="width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,#e94560,#0f3460);display:flex;align-items:center;justify-content:center;color:white;font-size:36px;font-weight:700;margin:0 auto;border:4px solid #e94560;">
+                        {{ request.user.username|first|upper }}
+                    </div>
+                {% endif %}
+                <a href="{% url 'profile_edit' %}"
+                   style="position:absolute;bottom:0;right:0;width:28px;height:28px;background:#e94560;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:12px;text-decoration:none;">
+                    <i class="fas fa-camera"></i>
+                </a>
+            </div>
+
+            <h5 style="font-weight:700;color:#1a1a2e;margin-bottom:4px;">
+                {{ request.user.get_full_name|default:request.user.username }}
+            </h5>
+            <span style="background:{% if request.user.is_teacher %}#e8f4fd{% else %}#fff0f3{% endif %};
+                         color:{% if request.user.is_teacher %}#0288d1{% else %}#e94560{% endif %};
+                         padding:4px 14px;border-radius:20px;font-size:13px;font-weight:600;">
+                {{ request.user.get_role_display }}
+            </span>
+
+            {% if request.user.bio %}
+            <p style="color:#888;font-size:13px;margin-top:12px;line-height:1.6;">{{ request.user.bio }}</p>
+            {% endif %}
+
+            <div style="margin-top:16px;padding-top:16px;border-top:1px solid #f0f2f5;">
+                {% if request.user.email %}
+                <div style="font-size:13px;color:#888;margin-bottom:8px;">
+                    <i class="fas fa-envelope me-2 text-danger"></i>{{ request.user.email }}
+                </div>
+                {% endif %}
+                {% if request.user.phone %}
+                <div style="font-size:13px;color:#888;">
+                    <i class="fas fa-phone me-2 text-danger"></i>{{ request.user.phone }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div style="margin-top:20px;display:flex;flex-direction:column;gap:8px;">
+                <a href="{% url 'profile_edit' %}" class="btn-primary-custom btn">
+                    <i class="fas fa-edit me-2"></i>Profilni tahrirlash
+                </a>
+                <a href="{% url 'change_password' %}" class="btn btn-outline-secondary" style="border-radius:10px;">
+                    <i class="fas fa-lock me-2"></i>Parol o'zgartirish
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- O'ng: statistika -->
+    <div class="col-md-8">
+        <!-- Statistika kartalar -->
+        <div class="row g-3 mb-4">
+            <div class="col-6">
+                <div class="card-custom" style="margin-bottom:0;">
+                    <div style="display:flex;align-items:center;gap:14px;">
+                        <div style="width:48px;height:48px;border-radius:12px;background:#fff0f3;display:flex;align-items:center;justify-content:center;font-size:20px;">
+                            <i class="fas fa-star" style="color:#e94560;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size:24px;font-weight:700;color:#1a1a2e;">{{ rating.total_score|default:0 }}</div>
+                            <div style="font-size:12px;color:#888;">Umumiy ball</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="card-custom" style="margin-bottom:0;">
+                    <div style="display:flex;align-items:center;gap:14px;">
+                        <div style="width:48px;height:48px;border-radius:12px;background:#f0f7ff;display:flex;align-items:center;justify-content:center;font-size:20px;">
+                            <i class="fas fa-tasks" style="color:#0f3460;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size:24px;font-weight:700;color:#1a1a2e;">{{ rating.tests_completed|default:0 }}</div>
+                            <div style="font-size:12px;color:#888;">Testlar</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="card-custom" style="margin-bottom:0;">
+                    <div style="display:flex;align-items:center;gap:14px;">
+                        <div style="width:48px;height:48px;border-radius:12px;background:#f0fff4;display:flex;align-items:center;justify-content:center;font-size:20px;">
+                            <i class="fas fa-play-circle" style="color:#28a745;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size:24px;font-weight:700;color:#1a1a2e;">{{ videos_watched }}</div>
+                            <div style="font-size:12px;color:#888;">Ko'rilgan darslar</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="card-custom" style="margin-bottom:0;">
+                    <div style="display:flex;align-items:center;gap:14px;">
+                        <div style="width:48px;height:48px;border-radius:12px;background:#fffbf0;display:flex;align-items:center;justify-content:center;font-size:20px;">
+                            <i class="fas fa-fire" style="color:#fd7e14;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size:24px;font-weight:700;color:#1a1a2e;">{{ rating.streak_days|default:0 }}</div>
+                            <div style="font-size:12px;color:#888;">Ketma-ket kun</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- So'nggi test natijalari -->
+        <div class="card-custom">
+            <h6><i class="fas fa-chart-bar me-2 text-danger"></i>So'nggi test natijalari</h6>
+            {% if test_results %}
+                {% for result in test_results %}
+                <div style="display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid #f0f2f5;">
+                    <div style="width:44px;height:44px;border-radius:12px;
+                        background:{% if result.percentage >= 80 %}#f0fff4{% elif result.percentage >= 50 %}#fffbf0{% else %}#fff0f3{% endif %};
+                        display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;
+                        color:{% if result.percentage >= 80 %}#28a745{% elif result.percentage >= 50 %}#fd7e14{% else %}#e94560{% endif %};">
+                        {{ result.percentage|floatformat:0 }}%
+                    </div>
+                    <div style="flex:1;">
+                        <div style="font-weight:600;color:#1a1a2e;font-size:14px;">{{ result.test.title }}</div>
+                        <div style="font-size:12px;color:#888;">{{ result.completed_at|date:"d.m.Y" }} · {{ result.score }}/{{ result.total }} to'g'ri</div>
+                    </div>
+                    <a href="{% url 'test_result' result.pk %}" style="color:#e94560;font-size:13px;text-decoration:none;">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align:center;padding:30px;color:#ccc;">
+                    <i class="fas fa-tasks" style="font-size:36px;margin-bottom:10px;display:block;"></i>
+                    Hali test ishlanmagan
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

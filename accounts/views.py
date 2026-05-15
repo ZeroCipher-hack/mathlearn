@@ -166,3 +166,69 @@ O'quvchi savoli: {question}"""
         return JsonResponse({'answer': f'API xatosi: {error_body}'})
     except Exception as e:
         return JsonResponse({'answer': f'Xatolik: {str(e)}'})
+
+
+@login_required
+def profile_view(request):
+    from ratings.models import Rating
+    from tests.models import TestResult
+    from courses.models import VideoProgress
+
+    rating = Rating.objects.filter(student=request.user).first()
+    test_results = TestResult.objects.filter(student=request.user).order_by('-completed_at')[:5]
+    videos_watched = VideoProgress.objects.filter(student=request.user, completed=True).count()
+
+    return render(request, 'accounts/profile.html', {
+        'rating': rating,
+        'test_results': test_results,
+        'videos_watched': videos_watched,
+    })
+
+
+@login_required
+def profile_edit(request):
+    if request.method == 'POST':
+        user = request.user
+        user.first_name = request.POST.get('first_name', '')
+        user.last_name = request.POST.get('last_name', '')
+        user.email = request.POST.get('email', '')
+        user.phone = request.POST.get('phone', '')
+        user.bio = request.POST.get('bio', '')
+
+        if request.FILES.get('avatar'):
+            user.avatar = request.FILES['avatar']
+
+        user.save()
+        messages.success(request, "Profil muvaffaqiyatli yangilandi!")
+        return redirect('profile')
+
+    return render(request, 'accounts/profile_edit.html')
+
+
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        from django.contrib.auth import update_session_auth_hash
+        old_password = request.POST.get('old_password')
+        new_password1 = request.POST.get('new_password1')
+        new_password2 = request.POST.get('new_password2')
+
+        if not request.user.check_password(old_password):
+            messages.error(request, "Eski parol noto'g'ri!")
+            return render(request, 'accounts/change_password.html')
+
+        if new_password1 != new_password2:
+            messages.error(request, "Yangi parollar mos kelmadi!")
+            return render(request, 'accounts/change_password.html')
+
+        if len(new_password1) < 8:
+            messages.error(request, "Parol kamida 8 ta belgidan iborat bo'lishi kerak!")
+            return render(request, 'accounts/change_password.html')
+
+        request.user.set_password(new_password1)
+        request.user.save()
+        update_session_auth_hash(request, request.user)
+        messages.success(request, "Parol muvaffaqiyatli o'zgartirildi!")
+        return redirect('profile')
+
+    return render(request, 'accounts/change_password.html')
