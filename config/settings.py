@@ -14,6 +14,8 @@ CSRF_TRUSTED_ORIGINS = [
     'https://web-production-972489.up.railway.app',
 ]
 
+TEACHER_SECRET_CODE = 'mathlearn2024'
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',

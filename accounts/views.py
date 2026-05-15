@@ -76,6 +76,7 @@ def register_view(request):
         password1 = request.POST.get('password1')
         password2 = request.POST.get('password2')
         role = request.POST.get('role')
+        teacher_code = request.POST.get('teacher_code', '')
 
         if password1 != password2:
             messages.error(request, "Parollar mos kelmadi!")
@@ -84,6 +85,13 @@ def register_view(request):
         if CustomUser.objects.filter(username=username).exists():
             messages.error(request, "Bu username band!")
             return render(request, 'accounts/register.html')
+
+        # O'qituvchi kodi tekshirish
+        if role == 'teacher':
+            from django.conf import settings as django_settings
+            if teacher_code != django_settings.TEACHER_SECRET_CODE:
+                messages.error(request, "O'qituvchi kodi noto'g'ri!")
+                return render(request, 'accounts/register.html')
 
         user = CustomUser.objects.create_user(
             username=username,
@@ -97,7 +105,6 @@ def register_view(request):
         return redirect('dashboard')
 
     return render(request, 'accounts/register.html')
-
 
 @login_required
 def ai_mentor_view(request):
