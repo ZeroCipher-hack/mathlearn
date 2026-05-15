@@ -1,3 +1,5 @@
+import os
+import dj_database_url
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -6,7 +8,7 @@ SECRET_KEY = 'django-insecure-jh(qk6q#6_$j-g_c$zqrkcm9=*-k9+zy^9mo^c!5uig!r4)&&+
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.100.151', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -25,6 +27,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -89,3 +92,12 @@ LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/login/'
 
 ANTHROPIC_API_KEY = 'your-api-key-here'
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+DATABASE_URL = os.getenv('DATABASE_URL')
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.config(default=DATABASE_URL)
+    }
