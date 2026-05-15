@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% block title %}O'yin — MathLearn{% endblock %}
+{% block nav_game %}active{% endblock %}
+{% block page_title %}<i class="fas fa-gamepad me-2 text-danger"></i>Matematik O'yin{% endblock %}
+
+{% block extra_css %}
+<style>
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+.mode-card { cursor:pointer; transition:all 0.3s; border:3px solid transparent; }
+.mode-card:hover { transform:translateY(-6px); }
+.mode-card.selected { border-color: #e94560; }
+.test-card { cursor:pointer; transition:all 0.3s; border:2px solid transparent; }
+.test-card:hover { border-color:#e94560; transform:translateY(-3px); }
+.test-card.selected { border-color:#e94560; background:#fff0f3; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Banner -->
+<div class="card-custom mb-4" style="background:linear-gradient(135deg,#1a1a2e 0%,#0f3460 100%);padding:36px;text-align:center;">
+    <div style="font-size:56px;margin-bottom:12px;animation:float 3s infinite;">🎮</div>
+    <h3 style="color:white;font-weight:700;margin-bottom:8px;">Matematik O'yinlar!</h3>
+    <p style="color:rgba(255,255,255,0.6);font-size:15px;margin:0;">O'yin rejimini va testni tanlang — o'ynab ball to'plang!</p>
+</div>
+
+{% if tests %}
+
+<!-- 1. O'yin rejimi tanlash -->
+<div class="card-custom mb-4">
+    <h6><i class="fas fa-dice me-2 text-danger"></i>O'yin rejimini tanlang</h6>
+    <div class="row g-3">
+
+        <div class="col-md-4">
+            <div class="card-custom mode-card selected" id="mode_classic" onclick="selectMode('classic')"
+                 style="text-align:center;padding:24px;margin:0;">
+                <div style="font-size:48px;margin-bottom:12px;">🏆</div>
+                <h6 style="font-weight:700;color:#1a1a2e;margin-bottom:6px;">Klassik</h6>
+                <p style="font-size:13px;color:#888;margin:0;">Oddiy test rejimi. Har bir to'g'ri javob uchun ball.</p>
+                <div style="margin-top:12px;padding:6px 14px;background:#fff0f3;color:#e94560;border-radius:8px;font-size:12px;font-weight:600;display:inline-block;">
+                    To'g'ri = 100 ball
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card-custom mode-card" id="mode_speed" onclick="selectMode('speed')"
+                 style="text-align:center;padding:24px;margin:0;">
+                <div style="font-size:48px;margin-bottom:12px;">⚡</div>
+                <h6 style="font-weight:700;color:#1a1a2e;margin-bottom:6px;">Tezlik poygasi</h6>
+                <p style="font-size:13px;color:#888;margin:0;">Har savol uchun 15 soniya. Tez javob = ko'p ball!</p>
+                <div style="margin-top:12px;padding:6px 14px;background:#fffbf0;color:#fd7e14;border-radius:8px;font-size:12px;font-weight:600;display:inline-block;">
+                    Tez = 300 ball
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card-custom mode-card" id="mode_survival" onclick="selectMode('survival')"
+                 style="text-align:center;padding:24px;margin:0;">
+                <div style="font-size:48px;margin-bottom:12px;">❤️</div>
+                <h6 style="font-weight:700;color:#1a1a2e;margin-bottom:6px;">Survival</h6>
+                <p style="font-size:13px;color:#888;margin:0;">3 ta hayot bor. Xato qilsang hayot kamayadi!</p>
+                <div style="margin-top:12px;padding:6px 14px;background:#f0fff4;color:#28a745;border-radius:8px;font-size:12px;font-weight:600;display:inline-block;">
+                    ❤️❤️❤️ 3 hayot
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- 2. Test tanlash -->
+<div class="card-custom mb-4">
+    <h6><i class="fas fa-list me-2 text-danger"></i>Test tanlang</h6>
+    <div class="row g-3" id="testList">
+        {% for test in tests %}
+        <div class="col-md-4">
+            <div class="card-custom test-card" id="test_{{ test.pk }}"
+                 onclick="selectTest({{ test.pk }}, '{{ test.title|escapejs }}')"
+                 style="padding:18px;margin:0;">
+                <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px;">
+                    <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#e94560,#c23152);display:flex;align-items:center;justify-content:center;color:white;font-size:18px;">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <span style="background:#f0f7ff;color:#0f3460;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:600;">
+                        {{ test.get_questions_count }} savol
+                    </span>
+                </div>
+                <h6 style="font-weight:700;color:#1a1a2e;margin-bottom:4px;font-size:14px;">{{ test.title }}</h6>
+                <p style="color:#888;font-size:12px;margin:0;">{{ test.description|truncatechars:50 }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- 3. Boshlash tugmasi -->
+<div class="text-center">
+    <div id="selectedInfo" style="display:none;margin-bottom:16px;">
+        <span style="background:#f0fff4;color:#28a745;padding:8px 20px;border-radius:12px;font-size:14px;font-weight:600;">
+            ✅ <span id="infoText"></span>
+        </span>
+    </div>
+    <button onclick="startGame()" id="startBtn"
+            class="btn-primary-custom btn"
+            style="padding:16px 48px;font-size:17px;border-radius:16px;opacity:0.5;pointer-events:none;">
+        <i class="fas fa-play me-2"></i>O'yinni Boshlash!
+    </button>
+</div>
+
+{% else %}
+<div class="card-custom text-center py-5">
+    <div style="font-size:64px;margin-bottom:16px;">😔</div>
+    <h5 style="color:#aaa;">Hali o'yin uchun testlar mavjud emas</h5>
+    {% if request.user.is_teacher %}
+    <a href="{% url 'test_create' %}" class="btn-primary-custom btn mt-3">
+        <i class="fas fa-plus me-2"></i>Test yaratish
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedMode = 'classic';
+let selectedTestId = null;
+let selectedTestTitle = '';
+
+function selectMode(mode) {
+    selectedMode = mode;
+    document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('mode_' + mode).classList.add('selected');
+    checkReady();
+}
+
+function selectTest(id, title) {
+    selectedTestId = id;
+    selectedTestTitle = title;
+    document.querySelectorAll('.test-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('test_' + id).classList.add('selected');
+    checkReady();
+}
+
+function checkReady() {
+    const btn = document.getElementById('startBtn');
+    const info = document.getElementById('selectedInfo');
+    if (selectedTestId && selectedMode) {
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'auto';
+        const modeNames = {classic:'Klassik', speed:'Tezlik poygasi', survival:'Survival'};
+        document.getElementById('infoText').textContent =
+            `"${selectedTestTitle}" — ${modeNames[selectedMode]} rejimi`;
+        info.style.display = 'block';
+    }
+}
+
+function startGame() {
+    if (!selectedTestId || !selectedMode) return;
+    const urls = {
+        classic: `/game/${selectedTestId}/classic/`,
+        speed: `/game/${selectedTestId}/speed/`,
+        survival: `/game/${selectedTestId}/survival/`,
+    };
+    window.location.href = urls[selectedMode];
+}
+</script>
+{% endblock %}

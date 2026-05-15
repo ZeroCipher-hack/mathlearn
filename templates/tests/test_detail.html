@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% block title %}{{ test.title }} — MathLearn{% endblock %}
+{% block nav_test %}active{% endblock %}
+{% block page_title %}<i class="fas fa-tasks me-2 text-danger"></i>{{ test.title }}{% endblock %}
+
+{% block content %}
+{% if already_done %}
+<div class="card-custom text-center py-5">
+    <i class="fas fa-check-circle" style="font-size:64px;color:#28a745;margin-bottom:20px;display:block;"></i>
+    <h5 style="color:#1a1a2e;">Bu testni allaqachon topshirgansiz!</h5>
+    <a href="{% url 'test_list' %}" class="btn-primary-custom btn mt-3">
+        <i class="fas fa-arrow-left me-2"></i>Testlar ro'yxati
+    </a>
+</div>
+{% else %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <!-- Timer -->
+        <div class="card-custom mb-4" style="background:linear-gradient(135deg,#1a1a2e,#0f3460);">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <h5 style="color:white;margin:0;font-weight:700;">{{ test.title }}</h5>
+                    <p style="color:rgba(255,255,255,0.6);margin:4px 0 0;font-size:13px;">
+                        <i class="fas fa-question-circle me-1"></i>{{ questions|length }} savol
+                    </p>
+                </div>
+                <div style="text-align:center;">
+                    <div id="timer" style="font-size:32px;font-weight:700;color:#e94560;font-family:monospace;">
+                        {{ test.time_limit }}:00
+                    </div>
+                    <div style="font-size:11px;color:rgba(255,255,255,0.5);">qolgan vaqt</div>
+                </div>
+            </div>
+            <!-- Progress -->
+            <div style="margin-top:16px;background:rgba(255,255,255,0.1);border-radius:4px;height:4px;">
+                <div id="progressBar" style="background:#e94560;height:4px;border-radius:4px;width:0%;transition:width 0.3s;"></div>
+            </div>
+        </div>
+
+        <form method="POST" id="testForm">
+            {% csrf_token %}
+            <input type="hidden" name="time_spent" id="timeSpent" value="0">
+
+            {% for question in questions %}
+            <div class="card-custom mb-3 question-card" id="qcard_{{ forloop.counter }}"
+                 style="{% if not forloop.first %}display:none{% endif %}">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                    <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#e94560,#c23152);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;flex-shrink:0;">
+                        {{ forloop.counter }}
+                    </div>
+                    <h6 style="margin:0;color:#1a1a2e;font-weight:700;line-height:1.5;">{{ question.text }}</h6>
+                </div>
+
+                <div class="d-grid gap-2">
+                    {% for choice in question.choices.all %}
+                    <label style="cursor:pointer;">
+                        <input type="radio" name="q_{{ question.id }}" value="{{ choice.id }}"
+                               style="display:none;" class="choice-input"
+                               onchange="markAnswered({{ forloop.parentloop.counter }})">
+                        <div class="choice-btn" style="padding:14px 18px;border:2px solid #e0e0e0;border-radius:12px;transition:all 0.2s;font-size:14px;color:#333;">
+                            <span style="display:inline-block;width:24px;height:24px;border-radius:50%;background:#f0f2f5;text-align:center;line-height:24px;font-size:12px;font-weight:700;margin-right:10px;color:#888;">
+                                {{ forloop.counter|stringformat:"s"|slice:":1" }}
+                            </span>
+                            {{ choice.text }}
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- Navigatsiya -->
+            <div class="card-custom d-flex justify-content-between align-items-center">
+                <button type="button" onclick="prevQ()" id="prevBtn" class="btn btn-outline-secondary" style="border-radius:10px;" disabled>
+                    <i class="fas fa-arrow-left me-2"></i>Oldingi
+                </button>
+                <span id="qCounter" style="font-weight:600;color:#1a1a2e;">1 / {{ questions|length }}</span>
+                <div>
+                    <button type="button" onclick="nextQ()" id="nextBtn" class="btn btn-outline-primary" style="border-radius:10px;">
+                        Keyingi<i class="fas fa-arrow-right ms-2"></i>
+                    </button>
+                    <button type="submit" id="submitBtn" class="btn-primary-custom btn ms-2" style="display:none;">
+                        <i class="fas fa-check me-2"></i>Yakunlash
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Savollar paneli -->
+    <div class="col-md-4">
+        <div class="card-custom" style="position:sticky;top:20px;">
+            <h6><i class="fas fa-list me-2 text-danger"></i>Savollar</h6>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                {% for question in questions %}
+                <button onclick="goToQ({{ forloop.counter }})" id="qbtn_{{ forloop.counter }}"
+                        style="width:38px;height:38px;border-radius:10px;border:2px solid #e0e0e0;background:white;font-weight:600;font-size:13px;cursor:pointer;transition:all 0.2s;">
+                    {{ forloop.counter }}
+                </button>
+                {% endfor %}
+            </div>
+            <div style="margin-top:16px;font-size:12px;">
+                <span style="display:inline-block;width:16px;height:16px;border-radius:4px;background:#e94560;margin-right:6px;vertical-align:middle;"></span>Joriy
+                <span style="display:inline-block;width:16px;height:16px;border-radius:4px;background:#28a745;margin-right:6px;margin-left:12px;vertical-align:middle;"></span>Javoblangan
+                <span style="display:inline-block;width:16px;height:16px;border-radius:4px;border:2px solid #e0e0e0;margin-right:6px;margin-left:12px;vertical-align:middle;"></span>Javoblanmagan
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const totalQ = {{ questions|length }};
+const timeLimit = {{ test.time_limit }} * 60;
+let current = 1;
+let answered = new Set();
+let elapsed = 0;
+
+// Timer
+const timerEl = document.getElementById('timer');
+const interval = setInterval(() => {
+    elapsed++;
+    const remaining = timeLimit - elapsed;
+    if (remaining <= 0) {
+        clearInterval(interval);
+        document.getElementById('testForm').submit();
+        return;
+    }
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    timerEl.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+    if (remaining < 60) timerEl.style.color = '#dc3545';
+    document.getElementById('progressBar').style.width = (elapsed/timeLimit*100) + '%';
+    document.getElementById('timeSpent').value = elapsed;
+}, 1000);
+
+function showQ(n) {
+    document.querySelectorAll('.question-card').forEach(c => c.style.display = 'none');
+    document.getElementById('qcard_' + n).style.display = 'block';
+    document.getElementById('qCounter').textContent = n + ' / ' + totalQ;
+    document.getElementById('prevBtn').disabled = n === 1;
+
+    const isLast = n === totalQ;
+    document.getElementById('nextBtn').style.display = isLast ? 'none' : 'inline-block';
+    document.getElementById('submitBtn').style.display = isLast ? 'inline-block' : 'none';
+
+    // Panel tugmalar
+    document.querySelectorAll('[id^="qbtn_"]').forEach(b => {
+        b.style.border = '2px solid #e0e0e0';
+        b.style.background = 'white';
+        b.style.color = '#333';
+    });
+    const cur = document.getElementById('qbtn_' + n);
+    if (cur) { cur.style.background = '#e94560'; cur.style.color = 'white'; cur.style.border = '2px solid #e94560'; }
+    answered.forEach(i => {
+        const b = document.getElementById('qbtn_' + i);
+        if (b && i !== n) { b.style.background = '#28a745'; b.style.color = 'white'; b.style.border = '2px solid #28a745'; }
+    });
+}
+
+function nextQ() { if (current < totalQ) { current++; showQ(current); } }
+function prevQ() { if (current > 1) { current--; showQ(current); } }
+function goToQ(n) { current = n; showQ(n); }
+
+function markAnswered(n) {
+    answered.add(n);
+    const b = document.getElementById('qbtn_' + n);
+    if (b) { b.style.background = '#28a745'; b.style.color = 'white'; b.style.border = '2px solid #28a745'; }
+}
+
+// Javob tanlash effekti
+document.querySelectorAll('.choice-input').forEach(input => {
+    input.addEventListener('change', function() {
+        const siblings = this.closest('.d-grid').querySelectorAll('.choice-btn');
+        siblings.forEach(b => { b.style.border = '2px solid #e0e0e0'; b.style.background = 'white'; });
+        this.nextElementSibling.style.border = '2px solid #e94560';
+        this.nextElementSibling.style.background = '#fff0f3';
+    });
+});
+
+showQ(1);
+</script>
+{% endblock %}

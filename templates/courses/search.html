@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}Qidiruv — MathLearn{% endblock %}
+{% block page_title %}<i class="fas fa-search me-2 text-danger"></i>Qidiruv{% endblock %}
+
+{% block content %}
+<!-- Qidiruv qutisi -->
+<div class="card-custom mb-4">
+    <form method="GET" action="{% url 'search' %}">
+        <div style="display:flex;gap:12px;">
+            <div style="flex:1;position:relative;">
+                <i class="fas fa-search" style="position:absolute;left:16px;top:50%;transform:translateY(-50%);color:#888;font-size:16px;"></i>
+                <input type="text" name="q" value="{{ query }}"
+                       placeholder="Video, kitob yoki formula qidiring..."
+                       autofocus
+                       style="width:100%;padding:14px 16px 14px 46px;border-radius:12px;border:2px solid {% if query %}#e94560{% else %}#e0e0e0{% endif %};font-size:15px;outline:none;transition:all 0.3s;"
+                       onfocus="this.style.borderColor='#e94560'"
+                       onblur="this.style.borderColor='{% if query %}#e94560{% else %}#e0e0e0{% endif %}'">
+            </div>
+            <button type="submit" class="btn-primary-custom btn" style="padding:14px 24px;white-space:nowrap;">
+                <i class="fas fa-search me-2"></i>Qidirish
+            </button>
+        </div>
+    </form>
+</div>
+
+{% if query %}
+<!-- Natija -->
+<div style="margin-bottom:20px;color:#888;font-size:14px;">
+    <strong style="color:#1a1a2e;">"{{ query }}"</strong> bo'yicha
+    <strong style="color:#e94560;">{{ total }}</strong> natija topildi
+</div>
+
+{% if not videos and not books and not formulas %}
+<div class="card-custom text-center py-5">
+    <i class="fas fa-search" style="font-size:64px;color:#ddd;margin-bottom:20px;display:block;"></i>
+    <h5 style="color:#aaa;">Hech narsa topilmadi</h5>
+    <p style="color:#ccc;font-size:14px;">Boshqa kalit so'z bilan qidiring</p>
+</div>
+{% endif %}
+
+{% if videos %}
+<div class="card-custom mb-4">
+    <h6><i class="fas fa-play-circle me-2 text-danger"></i>Video darslar ({{ videos|length }})</h6>
+    {% for video in videos %}
+    <a href="{% url 'video_detail' video.pk %}" style="text-decoration:none;">
+        <div style="display:flex;align-items:center;gap:15px;padding:12px 0;border-bottom:1px solid #f0f2f5;transition:background 0.2s;border-radius:8px;"
+             onmouseover="this.style.background='#f8f9ff';this.style.padding='12px 8px'"
+             onmouseout="this.style.background='';this.style.padding='12px 0'">
+            <div style="width:50px;height:50px;border-radius:12px;background:linear-gradient(135deg,#e94560,#0f3460);display:flex;align-items:center;justify-content:center;color:white;font-size:20px;flex-shrink:0;">
+                <i class="fas fa-play"></i>
+            </div>
+            <div style="flex:1;">
+                <div style="font-weight:600;color:#1a1a2e;font-size:14px;">{{ video.title }}</div>
+                <div style="font-size:12px;color:#888;margin-top:3px;">
+                    {{ video.description|truncatechars:80 }}
+                </div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+                {% if video.category %}
+                <span style="background:#fff0f3;color:#e94560;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;">{{ video.category.name }}</span>
+                {% endif %}
+                <div style="font-size:11px;color:#888;margin-top:4px;"><i class="fas fa-eye me-1"></i>{{ video.views }}</div>
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if books %}
+<div class="card-custom mb-4">
+    <h6><i class="fas fa-book me-2 text-danger"></i>Kitoblar ({{ books|length }})</h6>
+    {% for book in books %}
+    <div style="display:flex;align-items:center;gap:15px;padding:12px 0;border-bottom:1px solid #f0f2f5;">
+        <div style="width:50px;height:50px;border-radius:12px;background:linear-gradient(135deg,#0f3460,#1a1a2e);display:flex;align-items:center;justify-content:center;color:white;font-size:20px;flex-shrink:0;">
+            <i class="fas fa-book"></i>
+        </div>
+        <div style="flex:1;">
+            <div style="font-weight:600;color:#1a1a2e;font-size:14px;">{{ book.title }}</div>
+            <div style="font-size:12px;color:#888;margin-top:3px;">
+                <i class="fas fa-user me-1"></i>{{ book.author }} · {{ book.description|truncatechars:60 }}
+            </div>
+        </div>
+        <a href="{{ book.pdf_file.url }}" target="_blank" class="btn btn-sm" style="background:#f0f7ff;color:#0f3460;border-radius:8px;white-space:nowrap;">
+            <i class="fas fa-download me-1"></i>Yuklab olish
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if formulas %}
+<div class="card-custom">
+    <h6><i class="fas fa-square-root-alt me-2 text-danger"></i>Formulalar ({{ formulas|length }})</h6>
+    {% for formula in formulas %}
+    <div style="padding:14px 0;border-bottom:1px solid #f0f2f5;">
+        <div style="font-weight:600;color:#1a1a2e;font-size:14px;margin-bottom:8px;">{{ formula.title }}</div>
+        <div style="background:#f8f9ff;border-radius:10px;padding:14px;font-family:monospace;color:#333;font-size:15px;margin-bottom:8px;">
+            {{ formula.content }}
+        </div>
+        {% if formula.description %}
+        <div style="font-size:13px;color:#888;">{{ formula.description|truncatechars:100 }}</div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% else %}
+<!-- Qidiruv bo'sh bo'lsa -->
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card-custom text-center" style="cursor:pointer;" onclick="document.querySelector('input[name=q]').value='algebra';document.querySelector('form').submit()">
+            <i class="fas fa-superscript" style="font-size:36px;color:#e94560;margin-bottom:12px;display:block;"></i>
+            <h6 style="color:#1a1a2e;">Algebra</h6>
+            <p style="color:#888;font-size:13px;margin:0;">Algebra bo'yicha qidirish</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card-custom text-center" style="cursor:pointer;" onclick="document.querySelector('input[name=q]').value='geometriya';document.querySelector('form').submit()">
+            <i class="fas fa-shapes" style="font-size:36px;color:#0f3460;margin-bottom:12px;display:block;"></i>
+            <h6 style="color:#1a1a2e;">Geometriya</h6>
+            <p style="color:#888;font-size:13px;margin:0;">Geometriya bo'yicha qidirish</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card-custom text-center" style="cursor:pointer;" onclick="document.querySelector('input[name=q]').value='formula';document.querySelector('form').submit()">
+            <i class="fas fa-square-root-alt" style="font-size:36px;color:#28a745;margin-bottom:12px;display:block;"></i>
+            <h6 style="color:#1a1a2e;">Formulalar</h6>
+            <p style="color:#888;font-size:13px;margin:0;">Barcha formulalar</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

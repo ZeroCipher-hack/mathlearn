@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+{% block title %}❤️ Survival — {{ test.title }}{% endblock %}
+{% block nav_game %}active{% endblock %}
+{% block page_title %}<i class="fas fa-heart me-2 text-danger"></i>Survival Rejimi{% endblock %}
+
+{% block extra_css %}
+<style>
+@keyframes pop { 0%{transform:scale(0.85);opacity:0} 100%{transform:scale(1);opacity:1} }
+@keyframes heartLose { 0%{transform:scale(1)} 30%{transform:scale(1.4)} 60%{transform:scale(0.8)} 100%{transform:scale(1)} }
+@keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-10px)} 40%{transform:translateX(10px)} 60%{transform:translateX(-6px)} 80%{transform:translateX(6px)} }
+.choice-btn {
+    padding:14px 18px; border-radius:14px; border:none; font-size:14px;
+    font-weight:600; cursor:pointer; transition:all 0.15s; width:100%;
+    text-align:left; color:white;
+}
+.choice-btn:hover:not(:disabled) { filter:brightness(1.12); transform:scale(1.02); }
+.heart { font-size:28px; transition:all 0.3s; display:inline-block; }
+.heart.lost { opacity:0.2; filter:grayscale(1); animation:heartLose 0.5s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:720px;margin:0 auto;">
+
+    <!-- Header -->
+    <div class="card-custom mb-3" style="background:linear-gradient(135deg,#e94560,#c23152);padding:18px 24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+                <div style="color:rgba(255,255,255,0.7);font-size:11px;text-transform:uppercase;letter-spacing:1px;">Savol</div>
+                <div id="qNum" style="color:white;font-size:20px;font-weight:700;">1 / 1</div>
+            </div>
+            <div style="text-align:center;">
+                <div id="heartsDisplay" style="line-height:1;">
+                    <span class="heart" id="h1">❤️</span>
+                    <span class="heart" id="h2">❤️</span>
+                    <span class="heart" id="h3">❤️</span>
+                </div>
+                <div style="color:rgba(255,255,255,0.6);font-size:11px;margin-top:4px;">Hayotlar</div>
+            </div>
+            <div style="text-align:right;">
+                <div style="color:rgba(255,255,255,0.7);font-size:11px;text-transform:uppercase;letter-spacing:1px;">Ball</div>
+                <div id="scoreEl" style="color:white;font-size:20px;font-weight:700;">0</div>
+            </div>
+        </div>
+        <div style="margin-top:12px;background:rgba(255,255,255,0.2);border-radius:4px;height:5px;">
+            <div id="progressBar" style="background:white;height:5px;border-radius:4px;width:0%;transition:width 0.4s;"></div>
+        </div>
+    </div>
+
+    <!-- Savol -->
+    <div id="questionCard" class="card-custom mb-3" style="animation:pop 0.3s;">
+        <div style="text-align:center;padding:8px 0 20px;">
+            <h4 id="questionText" style="color:#1a1a2e;font-weight:700;line-height:1.6;margin:0;font-size:18px;"></h4>
+        </div>
+        <div id="choices" class="row g-3"></div>
+    </div>
+
+    <!-- Game Over -->
+    <div id="gameOver" style="display:none;">
+        <div class="card-custom text-center py-5">
+            <div style="font-size:80px;margin-bottom:12px;">💔</div>
+            <h3 style="font-weight:700;color:#e94560;margin-bottom:8px;">Game Over!</h3>
+            <div id="goScore" style="font-size:48px;font-weight:700;color:#1a1a2e;margin:16px 0;line-height:1;"></div>
+            <p id="goDetail" style="color:#888;font-size:14px;margin-bottom:24px;"></p>
+            <div class="d-flex gap-3 justify-content-center">
+                <a href="{% url 'game_lobby' %}" class="btn btn-outline-secondary" style="border-radius:10px;padding:10px 20px;">
+                    <i class="fas fa-arrow-left me-2"></i>Orqaga
+                </a>
+                <button onclick="location.reload()" class="btn-primary-custom btn">
+                    <i class="fas fa-redo me-2"></i>Qayta urinish
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Natija (yutganda) -->
+    <div id="resultScreen" style="display:none;">
+        <div class="card-custom text-center py-5">
+            <div style="font-size:80px;margin-bottom:12px;">🏆</div>
+            <h3 style="font-weight:700;color:#28a745;margin-bottom:8px;">Barcha savollardan o'tdingiz!</h3>
+            <div id="resultScore" style="font-size:56px;font-weight:700;color:#e94560;margin:16px 0;line-height:1;"></div>
+            <p id="resultDetail" style="color:#888;font-size:14px;margin-bottom:24px;"></p>
+            <div style="margin-bottom:24px;" id="heartsLeft"></div>
+            <div class="d-flex gap-3 justify-content-center">
+                <a href="{% url 'game_lobby' %}" class="btn btn-outline-secondary" style="border-radius:10px;padding:10px 20px;">
+                    <i class="fas fa-arrow-left me-2"></i>Orqaga
+                </a>
+                <button onclick="location.reload()" class="btn-primary-custom btn">
+                    <i class="fas fa-redo me-2"></i>Qayta
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const questionsData = {{ questions_json|safe }};
+const colors = ['#e94560','#0f3460','#28a745','#6f42c1'];
+const letters = ['A','B','C','D'];
+const MAX_LIVES = 3;
+
+let current = 0, score = 0, correctCount = 0, lives = MAX_LIVES, answered = false;
+const total = questionsData.length;
+
+function showQuestion() {
+    if (lives <= 0) { showGameOver(); return; }
+    if (current >= total) { showResult(); return; }
+    answered = false;
+
+    const q = questionsData[current];
+    document.getElementById('qNum').textContent = `${current+1} / ${total}`;
+    document.getElementById('questionText').textContent = q.text;
+    document.getElementById('progressBar').style.width = (current/total*100)+'%';
+
+    const ch = document.getElementById('choices');
+    ch.innerHTML = '';
+    q.choices.forEach((c,i) => {
+        const col = document.createElement('div');
+        col.className = 'col-6';
+        col.innerHTML = `<button class="choice-btn" data-correct="${c.correct}"
+            style="background:${colors[i%colors.length]};"
+            onclick="selectAnswer(this,${c.correct})">
+            <span style="display:inline-block;width:24px;height:24px;border-radius:6px;background:rgba(255,255,255,0.2);text-align:center;line-height:24px;font-size:12px;margin-right:8px;">${letters[i]}</span>${c.text}
+        </button>`;
+        ch.appendChild(col);
+    });
+
+    document.getElementById('questionCard').style.animation = 'none';
+    setTimeout(() => document.getElementById('questionCard').style.animation = 'pop 0.3s', 10);
+}
+
+function selectAnswer(btn, isCorrect) {
+    if (answered) return;
+    answered = true;
+    document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+
+    if (isCorrect) {
+        score += 150;
+        correctCount++;
+        document.getElementById('scoreEl').textContent = score;
+        btn.style.boxShadow = '0 0 0 4px rgba(255,255,255,0.8)';
+        showFeedback('✅ To\'g\'ri! +150', '#28a745');
+        setTimeout(() => { current++; showQuestion(); }, 1200);
+    } else {
+        lives--;
+        btn.style.opacity = '0.5';
+        document.getElementById('questionCard').style.animation = 'shake 0.5s';
+
+        // Hayot kamayishi
+        const heartEl = document.getElementById('h' + (lives+1));
+        if (heartEl) heartEl.classList.add('lost');
+
+        document.querySelectorAll('.choice-btn').forEach(b => {
+            if (b.dataset.correct === 'true') b.style.boxShadow = '0 0 0 4px rgba(255,255,255,0.8)';
+        });
+
+        if (lives <= 0) {
+            showFeedback('💔 Oxirgi hayot!', '#e94560');
+            setTimeout(() => showGameOver(), 1500);
+        } else {
+            showFeedback(`❌ Xato! ${lives} hayot qoldi`, '#e94560');
+            setTimeout(() => { current++; showQuestion(); }, 1500);
+        }
+    }
+}
+
+function showFeedback(msg, color) {
+    const old = document.getElementById('fb');
+    if (old) old.remove();
+    const el = document.createElement('div');
+    el.id = 'fb';
+    el.textContent = msg;
+    el.style.cssText = `position:fixed;top:80px;left:50%;transform:translateX(-50%);background:${color};color:white;padding:12px 28px;border-radius:50px;font-weight:700;font-size:16px;z-index:9999;animation:pop 0.3s;box-shadow:0 4px 20px rgba(0,0,0,0.2);white-space:nowrap;`;
+    document.body.appendChild(el);
+    setTimeout(() => el && el.remove(), 1300);
+}
+
+function showGameOver() {
+    document.getElementById('questionCard').style.display = 'none';
+    document.getElementById('gameOver').style.display = 'block';
+    document.getElementById('goScore').textContent = score + ' ball';
+    document.getElementById('goDetail').textContent = `${correctCount}/${total} to'g'ri · ${current} savolda to'xtadingiz`;
+}
+
+function showResult() {
+    document.getElementById('questionCard').style.display = 'none';
+    document.getElementById('resultScreen').style.display = 'block';
+    const bonus = lives * 200;
+    score += bonus;
+    document.getElementById('resultScore').textContent = score + ' ball';
+    document.getElementById('resultDetail').textContent = `${correctCount}/${total} to'g'ri · +${bonus} hayot bonusi`;
+    let hearts = '';
+    for(let i=0;i<lives;i++) hearts += '❤️ ';
+    document.getElementById('heartsLeft').innerHTML = `<span style="font-size:24px;">${hearts}</span><br><span style="font-size:13px;color:#888;">Qolgan hayot bonusi: +${bonus} ball</span>`;
+}
+
+showQuestion();
+</script>
+{% endblock %}

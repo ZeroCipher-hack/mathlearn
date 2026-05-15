@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% block title %}O'yin — {{ test.title }}{% endblock %}
+{% block nav_game %}active{% endblock %}
+{% block page_title %}<i class="fas fa-gamepad me-2 text-danger"></i>{{ test.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+@keyframes pop { 0%{transform:scale(0.8);opacity:0} 100%{transform:scale(1);opacity:1} }
+@keyframes countdown { from{stroke-dashoffset:0} to{stroke-dashoffset:283} }
+.choice-btn {
+    padding:16px 20px; border-radius:14px; border:none; font-size:14px;
+    font-weight:600; cursor:pointer; transition:all 0.2s; width:100%;
+    text-align:left; color:white; margin-bottom:0;
+}
+.choice-btn:hover:not(:disabled) { transform:scale(1.02); filter:brightness(1.1); }
+.choice-btn:disabled { cursor:not-allowed; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:720px;margin:0 auto;">
+
+    <!-- Header -->
+    <div class="card-custom mb-3" style="background:linear-gradient(135deg,#1a1a2e,#0f3460);padding:20px 24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+                <div style="color:rgba(255,255,255,0.5);font-size:11px;text-transform:uppercase;letter-spacing:1px;">Savol</div>
+                <div id="qNum" style="color:white;font-size:22px;font-weight:700;">1 / 1</div>
+            </div>
+            <div style="text-align:center;">
+                <div id="timer" style="font-size:40px;font-weight:700;color:#e94560;font-family:monospace;line-height:1;">00:00</div>
+                <div style="color:rgba(255,255,255,0.4);font-size:11px;">qolgan vaqt</div>
+            </div>
+            <div style="text-align:right;">
+                <div style="color:rgba(255,255,255,0.5);font-size:11px;text-transform:uppercase;letter-spacing:1px;">Ball</div>
+                <div id="scoreEl" style="color:#FFD700;font-size:22px;font-weight:700;">0</div>
+            </div>
+        </div>
+        <div style="margin-top:14px;background:rgba(255,255,255,0.1);border-radius:4px;height:5px;">
+            <div id="progressBar" style="background:#e94560;height:5px;border-radius:4px;transition:width 0.4s;width:0%;"></div>
+        </div>
+    </div>
+
+    <!-- Savol kartasi -->
+    <div id="questionCard" class="card-custom mb-3" style="animation:pop 0.3s;">
+        <div style="text-align:center;padding:10px 0 20px;">
+            <div style="font-size:12px;color:#888;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;">Savol</div>
+            <h4 id="questionText" style="color:#1a1a2e;font-weight:700;line-height:1.6;margin:0;font-size:18px;"></h4>
+        </div>
+        <div id="choices" class="row g-3"></div>
+    </div>
+
+    <!-- Natija ekrani -->
+    <div id="resultScreen" style="display:none;">
+        <div class="card-custom text-center py-5">
+            <div id="resultEmoji" style="font-size:80px;margin-bottom:12px;"></div>
+            <h3 id="resultTitle" style="font-weight:700;margin-bottom:8px;"></h3>
+            <div id="resultScore" style="font-size:60px;font-weight:700;color:#e94560;margin:16px 0;line-height:1;"></div>
+            <p id="resultDetail" style="color:#888;font-size:14px;margin-bottom:24px;"></p>
+
+            <div style="background:#f8f9ff;border-radius:16px;padding:20px;margin:0 auto 24px;max-width:300px;">
+                <div class="row g-3">
+                    <div class="col-4">
+                        <div style="font-size:22px;font-weight:700;color:#28a745;" id="correctCount">0</div>
+                        <div style="font-size:11px;color:#888;">To'g'ri</div>
+                    </div>
+                    <div class="col-4">
+                        <div style="font-size:22px;font-weight:700;color:#e94560;" id="wrongCount">0</div>
+                        <div style="font-size:11px;color:#888;">Noto'g'ri</div>
+                    </div>
+                    <div class="col-4">
+                        <div style="font-size:22px;font-weight:700;color:#fd7e14;" id="timeCount">0</div>
+                        <div style="font-size:11px;color:#888;">Soniya</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-3 justify-content-center">
+                <a href="{% url 'game_lobby' %}" class="btn btn-outline-secondary" style="border-radius:10px;padding:10px 20px;">
+                    <i class="fas fa-arrow-left me-2"></i>Orqaga
+                </a>
+                <button onclick="restartGame()" class="btn-primary-custom btn">
+                    <i class="fas fa-redo me-2"></i>Qayta o'ynash
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const questionsData = {{ questions_json|safe }};
+const colors = ['#e94560', '#0f3460', '#28a745', '#fd7e14'];
+const letters = ['A', 'B', 'C', 'D'];
+const timeLimit = {{ test.time_limit }} * 60;
+
+let current = 0;
+let score = 0;
+let correctCount = 0;
+let answered = false;
+let elapsed = 0;
+const total = questionsData.length;
+
+// Timer
+const timerEl = document.getElementById('timer');
+const timerInterval = setInterval(() => {
+    elapsed++;
+    const rem = timeLimit - elapsed;
+    if (rem <= 0) {
+        clearInterval(timerInterval);
+        showResult();
+        return;
+    }
+    const m = Math.floor(rem / 60);
+    const s = rem % 60;
+    timerEl.textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+    if (rem < 60) timerEl.style.color = '#dc3545';
+    else if (rem < 120) timerEl.style.color = '#fd7e14';
+}, 1000);
+
+function showQuestion() {
+    if (current >= total) { showResult(); return; }
+    answered = false;
+
+    const q = questionsData[current];
+    document.getElementById('qNum').textContent = `${current + 1} / ${total}`;
+    document.getElementById('questionText').textContent = q.text;
+    document.getElementById('progressBar').style.width = (current / total * 100) + '%';
+
+    const choicesDiv = document.getElementById('choices');
+    choicesDiv.innerHTML = '';
+
+    q.choices.forEach((c, i) => {
+        const col = document.createElement('div');
+        col.className = 'col-6';
+        col.innerHTML = `
+            <button class="choice-btn" data-correct="${c.correct}"
+                    style="background:${colors[i % colors.length]};"
+                    onclick="selectAnswer(this, ${c.correct})">
+                <span style="display:inline-block;width:26px;height:26px;border-radius:8px;
+                      background:rgba(255,255,255,0.2);text-align:center;line-height:26px;
+                      font-size:12px;font-weight:700;margin-right:8px;flex-shrink:0;">
+                    ${letters[i]}
+                </span>${c.text}
+            </button>`;
+        choicesDiv.appendChild(col);
+    });
+
+    // Animatsiya
+    document.getElementById('questionCard').style.animation = 'none';
+    setTimeout(() => {
+        document.getElementById('questionCard').style.animation = 'pop 0.3s';
+    }, 10);
+}
+
+function selectAnswer(btn, isCorrect) {
+    if (answered) return;
+    answered = true;
+
+    const allBtns = document.querySelectorAll('.choice-btn');
+    allBtns.forEach(b => b.disabled = true);
+
+    if (isCorrect) {
+        btn.style.boxShadow = '0 0 0 4px rgba(255,255,255,0.6), 0 0 20px rgba(40,167,69,0.5)';
+        btn.style.transform = 'scale(1.03)';
+        score += 100;
+        correctCount++;
+        document.getElementById('scoreEl').textContent = score;
+        showFeedback('✅ To\'g\'ri! +100', '#28a745');
+    } else {
+        btn.style.opacity = '0.5';
+        btn.style.transform = 'scale(0.97)';
+        // To'g'ri javobni ko'rsat
+        allBtns.forEach(b => {
+            if (b.dataset.correct === 'true') {
+                b.style.boxShadow = '0 0 0 4px rgba(255,255,255,0.6)';
+                b.style.transform = 'scale(1.03)';
+            }
+        });
+        showFeedback('❌ Noto\'g\'ri!', '#e94560');
+    }
+
+    setTimeout(() => {
+        current++;
+        showQuestion();
+    }, 1600);
+}
+
+function showFeedback(msg, color) {
+    const existing = document.getElementById('feedback');
+    if (existing) existing.remove();
+
+    const el = document.createElement('div');
+    el.id = 'feedback';
+    el.textContent = msg;
+    el.style.cssText = `
+        position:fixed;top:80px;left:50%;transform:translateX(-50%);
+        background:${color};color:white;padding:12px 28px;
+        border-radius:50px;font-weight:700;font-size:16px;
+        z-index:9999;animation:pop 0.3s;box-shadow:0 4px 20px rgba(0,0,0,0.2);
+        white-space:nowrap;`;
+    document.body.appendChild(el);
+    setTimeout(() => el && el.remove(), 1500);
+}
+
+function showResult() {
+    clearInterval(timerInterval);
+    document.getElementById('questionCard').style.display = 'none';
+    document.getElementById('resultScreen').style.display = 'block';
+
+    const pct = total > 0 ? Math.round(correctCount / total * 100) : 0;
+    const wrong = total - correctCount;
+
+    document.getElementById('resultEmoji').textContent = pct >= 80 ? '🏆' : pct >= 60 ? '👍' : pct >= 40 ? '📚' : '💪';
+    document.getElementById('resultTitle').textContent = pct >= 80 ? 'Ajoyib natija!' : pct >= 60 ? 'Yaxshi!' : pct >= 40 ? 'Ko\'proq mashq qiling!' : 'Davom eting!';
+    document.getElementById('resultTitle').style.color = pct >= 80 ? '#28a745' : pct >= 60 ? '#fd7e14' : '#e94560';
+    document.getElementById('resultScore').textContent = score + ' ball';
+    document.getElementById('resultDetail').textContent = `${pct}% to'g'ri · ${elapsed} soniya sarflandi`;
+    document.getElementById('correctCount').textContent = correctCount;
+    document.getElementById('wrongCount').textContent = wrong;
+    document.getElementById('timeCount').textContent = elapsed;
+
+    document.getElementById('progressBar').style.width = '100%';
+}
+
+function restartGame() {
+    current = 0;
+    score = 0;
+    correctCount = 0;
+    answered = false;
+    elapsed = 0;
+    document.getElementById('scoreEl').textContent = '0';
+    document.getElementById('timerEl') && (timerEl.textContent = '00:00');
+    document.getElementById('resultScreen').style.display = 'none';
+    document.getElementById('questionCard').style.display = 'block';
+    showQuestion();
+}
+
+// Boshlash
+showQuestion();
+</script>
+{% endblock %}

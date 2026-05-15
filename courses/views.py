@@ -1,8 +1,8 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db import models
 from .models import Category, Video, Book, Formula, VideoProgress
-from accounts.models import CustomUser
 
 
 def teacher_required(view_func):
@@ -36,9 +36,19 @@ def video_detail(request, pk):
     video.views += 1
     video.save()
 
-    progress, _ = VideoProgress.objects.get_or_create(
-        student=request.user, video=video
-    )
+    progress = None
+    if request.user.is_student():
+        progress, created = VideoProgress.objects.get_or_create(
+            student=request.user, video=video
+        )
+        if created:
+            from ratings.models import Rating
+            from django.utils import timezone
+            rating, _ = Rating.objects.get_or_create(student=request.user)
+            rating.videos_watched += 1
+            rating.total_score += 20
+            rating.last_activity = timezone.now().date()
+            rating.save()
 
     related = Video.objects.filter(
         category=video.category, is_published=True
@@ -67,7 +77,7 @@ def video_upload(request):
             messages.error(request, "Sarlavha va video fayl majburiy!")
             return render(request, 'courses/video_upload.html', {'categories': categories})
 
-        Video.objects.create(
+        video = Video.objects.create(
             title=title,
             description=description,
             category_id=category_id if category_id else None,
@@ -76,6 +86,21 @@ def video_upload(request):
             teacher=request.user,
             is_published=is_published
         )
+
+        # O'quvchilarga bildirishnoma
+        if is_published:
+            from accounts.models import CustomUser
+            from homework.models import Notification
+            students = CustomUser.objects.filter(role='student')
+            for student in students:
+                Notification.objects.create(
+                    user=student,
+                    title="Yangi video dars!",
+                    message=f"Yangi dars qo'shildi: '{title}'",
+                    notif_type='video',
+                    link=f'/videos/{video.pk}/'
+                )
+
         messages.success(request, "Video muvaffaqiyatli yuklandi!")
         return redirect('video_list')
 
@@ -149,3 +174,38 @@ def formula_add(request):
         messages.success(request, "Formula qo'shildi!")
         return redirect('formula_list')
     return render(request, 'courses/formula_add.html', {'categories': categories})
+
+
+# =================== QIDIRUV ===================
+
+@login_required
+def search_view(request):
+    query = request.GET.get('q', '').strip()
+    videos = []
+    books = []
+    formulas = []
+    total = 0
+
+    if query:
+        videos = Video.objects.filter(is_published=True).filter(
+            models.Q(title__icontains=query) |
+            models.Q(description__icontains=query)
+        )
+        books = Book.objects.filter(is_published=True).filter(
+            models.Q(title__icontains=query) |
+            models.Q(author__icontains=query) |
+            models.Q(description__icontains=query)
+        )
+        formulas = Formula.objects.filter(is_published=True).filter(
+            models.Q(title__icontains=query) |
+            models.Q(description__icontains=query)
+        )
+        total = videos.count() + books.count() + formulas.count()
+
+    return render(request, 'courses/search.html', {
+        'query': query,
+        'videos': videos,
+        'books': books,
+        'formulas': formulas,
+        'total': total,
+    })

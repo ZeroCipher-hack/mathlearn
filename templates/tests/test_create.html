@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}Test yaratish — MathLearn{% endblock %}
+{% block nav_test %}active{% endblock %}
+{% block page_title %}<i class="fas fa-plus me-2 text-danger"></i>Test yaratish{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-9">
+        <div class="card-custom">
+            <h6><i class="fas fa-tasks me-2 text-danger"></i>Yangi test</h6>
+            <form method="POST" id="testForm">
+                {% csrf_token %}
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label style="font-weight:600;font-size:14px;color:#1a1a2e;">Test nomi *</label>
+                        <input type="text" name="title" class="form-control mt-1" required style="border-radius:10px;border:1.5px solid #e0e0e0;padding:10px 14px;">
+                    </div>
+                    <div class="col-md-3">
+                        <label style="font-weight:600;font-size:14px;color:#1a1a2e;">Vaqt (daqiqa)</label>
+                        <input type="number" name="time_limit" class="form-control mt-1" value="10" min="1" max="120" style="border-radius:10px;border:1.5px solid #e0e0e0;padding:10px 14px;">
+                    </div>
+                    <div class="col-md-3">
+                        <label style="font-weight:600;font-size:14px;color:#1a1a2e;">Kategoriya</label>
+                        <select name="category" class="form-select mt-1" style="border-radius:10px;border:1.5px solid #e0e0e0;padding:10px 14px;">
+                            <option value="">— Tanlang —</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label style="font-weight:600;font-size:14px;color:#1a1a2e;">Tavsif</label>
+                        <textarea name="description" class="form-control mt-1" rows="2" style="border-radius:10px;border:1.5px solid #e0e0e0;padding:10px 14px;"></textarea>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input type="checkbox" name="is_published" class="form-check-input" id="pub" checked>
+                            <label class="form-check-label" for="pub" style="font-weight:600;color:#1a1a2e;">Darhol nashr qilish</label>
+                        </div>
+                    </div>
+                </div>
+
+                <hr style="border-color:#f0f2f5;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="mb-0"><i class="fas fa-question-circle me-2 text-danger"></i>Savollar</h6>
+                    <button type="button" onclick="addQuestion()" class="btn btn-sm" style="background:#fff0f3;color:#e94560;border-radius:8px;font-weight:600;">
+                        <i class="fas fa-plus me-1"></i>Savol qo'shish
+                    </button>
+                </div>
+
+                <div id="questions"></div>
+
+                <div class="d-flex gap-3 mt-3">
+                    <button type="submit" class="btn-primary-custom btn">
+                        <i class="fas fa-save me-2"></i>Saqlash
+                    </button>
+                    <a href="{% url 'test_list' %}" class="btn btn-outline-secondary" style="border-radius:10px;">Bekor qilish</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let qCount = 0;
+const letters = ['A','B','C','D'];
+
+function addQuestion() {
+    const i = qCount++;
+    const div = document.createElement('div');
+    div.className = 'card-custom mb-3';
+    div.style.border = '2px dashed #e0e0e0';
+    div.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <span style="font-weight:700;color:#1a1a2e;">${i+1}-savol</span>
+            <button type="button" onclick="this.closest('.card-custom').remove()" style="background:none;border:none;color:#e94560;cursor:pointer;"><i class="fas fa-trash"></i></button>
+        </div>
+        <input type="text" name="q_text[]" class="form-control mb-3" placeholder="Savol matni..." required style="border-radius:10px;border:1.5px solid #e0e0e0;padding:10px 14px;">
+        <div style="font-size:13px;font-weight:600;color:#888;margin-bottom:8px;">Javob variantlari (to'g'risini belgilang):</div>
+        ${[0,1,2,3].map(j => `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <input type="radio" name="correct_${i}" value="${j}" ${j===0?'checked':''} style="accent-color:#e94560;">
+            <span style="width:28px;height:28px;border-radius:8px;background:#f0f2f5;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;">${letters[j]}</span>
+            <input type="text" name="choice_${i}[]" class="form-control" placeholder="${letters[j]} varianti..." required style="border-radius:8px;border:1.5px solid #e0e0e0;padding:8px 12px;font-size:14px;">
+        </div>`).join('')}
+    `;
+    document.getElementById('questions').appendChild(div);
+}
+
+addQuestion();
+</script>
+{% endblock %}

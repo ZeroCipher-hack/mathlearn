@@ -7,169 +7,99 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { background: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
-        .sidebar {
-            width: 260px; min-height: 100vh;
-            background: linear-gradient(180deg,
-                {% if request.user.is_teacher %}#0f3460{% else %}#1a1a2e{% endif %} 0%,
-                #16213e 100%);
-            position: fixed; left: 0; top: 0; padding: 20px 0; z-index: 100;
-        }
-        .sidebar .logo {
-            text-align: center; padding: 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px;
-        }
-        .sidebar .logo .logo-icon { font-size: 36px; color: #e94560; }
-        .sidebar .logo h4 { color: white; margin: 5px 0 0; font-weight: 700; }
-        .sidebar .logo p { color: rgba(255,255,255,0.5); font-size: 11px; margin: 0; }
-        .nav-link {
-            display: flex; align-items: center; gap: 12px;
-            padding: 11px 24px; color: rgba(255,255,255,0.6);
-            text-decoration: none; transition: all 0.3s; font-size: 14px;
-            border-right: 3px solid transparent;
-        }
-        .nav-link:hover, .nav-link.active {
-            color: white; background: rgba(233,69,96,0.15);
-            border-right-color: #e94560;
-        }
-        .nav-link i { width: 18px; text-align: center; }
-        .nav-section {
-            padding: 8px 24px 4px;
-            color: rgba(255,255,255,0.3);
-            font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
-        }
-        .main-content { margin-left: 260px; padding: 25px; }
-        .topbar {
-            background: white; border-radius: 16px;
-            padding: 14px 24px; margin-bottom: 24px;
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        .topbar h5 { margin: 0; font-weight: 600; color: #1a1a2e; font-size: 16px; }
-        .user-avatar {
-            width: 40px; height: 40px; border-radius: 50%;
-            background: linear-gradient(135deg, #e94560, #0f3460);
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-weight: 700;
-        }
-        .card-custom {
-            background: white; border-radius: 16px; padding: 24px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            border: none; margin-bottom: 20px;
-        }
-        .card-custom h6 {
-            font-weight: 700; color: #1a1a2e; margin-bottom: 16px;
-            padding-bottom: 12px; border-bottom: 2px solid #f0f2f5;
-        }
-        .btn-primary-custom {
-            background: linear-gradient(135deg, #e94560, #c23152);
-            border: none; color: white; border-radius: 10px;
-            padding: 10px 20px; font-weight: 600; font-size: 14px;
-            transition: all 0.3s;
-        }
-        .btn-primary-custom:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(233,69,96,0.4); color: white;
-        }
-        .alert { border-radius: 12px; border: none; }
+        body{background:#f0f2f5;font-family:'Segoe UI',sans-serif;}
+        .sidebar{width:260px;min-height:100vh;background:linear-gradient(180deg,#1a1a2e 0%,#16213e 100%);position:fixed;left:0;top:0;padding:20px 0;z-index:100;overflow-y:auto;}
+        .sidebar .logo{text-align:center;padding:20px;border-bottom:1px solid rgba(255,255,255,0.1);margin-bottom:20px;}
+        .sidebar .logo .logo-icon{font-size:36px;color:#e94560;}
+        .sidebar .logo h4{color:white;margin:5px 0 0;font-weight:700;}
+        .sidebar .logo p{color:rgba(255,255,255,0.5);font-size:11px;margin:0;}
+        .nav-link{display:flex;align-items:center;gap:12px;padding:11px 24px;color:rgba(255,255,255,0.6);text-decoration:none;transition:all 0.3s;font-size:14px;border-right:3px solid transparent;}
+        .nav-link:hover,.nav-link.active{color:white;background:rgba(233,69,96,0.15);border-right-color:#e94560;}
+        .nav-link i{width:18px;text-align:center;}
+        .nav-section{padding:8px 24px 4px;color:rgba(255,255,255,0.3);font-size:10px;text-transform:uppercase;letter-spacing:1px;}
+        .main-content{margin-left:260px;padding:25px;}
+        .topbar{background:white;border-radius:16px;padding:12px 20px;margin-bottom:24px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 10px rgba(0,0,0,0.05);}
+        .topbar-title{font-weight:600;color:#1a1a2e;font-size:15px;white-space:nowrap;margin:0;flex-shrink:0;}
+        .search-form{flex:1;max-width:300px;}
+        .search-input{width:100%;padding:8px 12px 8px 36px;border-radius:10px;border:1.5px solid #e0e0e0;font-size:13px;outline:none;transition:all 0.3s;}
+        .search-input:focus{border-color:#e94560;}
+        .topbar-right{display:flex;align-items:center;gap:10px;margin-left:auto;}
+        .notif-btn{position:relative;color:#888;font-size:17px;text-decoration:none;width:36px;height:36px;background:#f0f2f5;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+        .notif-badge{position:absolute;top:-4px;right:-4px;background:#e94560;color:white;border-radius:50%;width:17px;height:17px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+        .user-name{font-weight:600;font-size:13px;color:#1a1a2e;}
+        .user-role{font-size:11px;color:#888;}
+        .user-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#e94560,#0f3460);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px;flex-shrink:0;}
+        .card-custom{background:white;border-radius:16px;padding:24px;box-shadow:0 2px 10px rgba(0,0,0,0.05);border:none;margin-bottom:20px;}
+        .card-custom h6{font-weight:700;color:#1a1a2e;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #f0f2f5;}
+        .btn-primary-custom{background:linear-gradient(135deg,#e94560,#c23152);border:none;color:white;border-radius:10px;padding:10px 20px;font-weight:600;font-size:14px;transition:all 0.3s;text-decoration:none;display:inline-block;}
+        .btn-primary-custom:hover{transform:translateY(-2px);box-shadow:0 5px 15px rgba(233,69,96,0.4);color:white;}
+        .alert{border-radius:12px;border:none;}
         {% block extra_css %}{% endblock %}
     </style>
 </head>
 <body>
-
-<!-- Sidebar -->
 <div class="sidebar">
     <div class="logo">
-        <div class="logo-icon">∑</div>
+        <div class="logo-icon">&#8721;</div>
         <h4>MathLearn</h4>
         <p>{% if request.user.is_teacher %}O'qituvchi{% else %}O'quvchi{% endif %} paneli</p>
     </div>
-
     <div class="nav flex-column">
         <div class="nav-section">Asosiy</div>
-        <a href="{% url 'dashboard' %}" class="nav-link {% block nav_home %}{% endblock %}">
-            <i class="fas fa-home"></i> Bosh sahifa
-        </a>
-
+        <a href="{% url 'dashboard' %}" class="nav-link {% block nav_home %}{% endblock %}"><i class="fas fa-home"></i> Bosh sahifa</a>
         <div class="nav-section">Ta'lim</div>
-        <a href="{% url 'video_list' %}" class="nav-link {% block nav_video %}{% endblock %}">
-            <i class="fas fa-play-circle"></i> Video darslar
-        </a>
-        <a href="{% url 'book_list' %}" class="nav-link {% block nav_book %}{% endblock %}">
-            <i class="fas fa-book"></i> Kitoblar
-        </a>
-        <a href="{% url 'formula_list' %}" class="nav-link {% block nav_formula %}{% endblock %}">
-            <i class="fas fa-square-root-alt"></i> Formulalar
-        </a>
-
+        <a href="{% url 'video_list' %}" class="nav-link {% block nav_video %}{% endblock %}"><i class="fas fa-play-circle"></i> Video darslar</a>
+        <a href="{% url 'book_list' %}" class="nav-link {% block nav_book %}{% endblock %}"><i class="fas fa-book"></i> Kitoblar</a>
+        <a href="{% url 'formula_list' %}" class="nav-link {% block nav_formula %}{% endblock %}"><i class="fas fa-square-root-alt"></i> Formulalar</a>
         <div class="nav-section">Faoliyat</div>
-        <a href="#" class="nav-link {% block nav_test %}{% endblock %}">
-            <i class="fas fa-tasks"></i> Testlar
-        </a>
-        <a href="#" class="nav-link {% block nav_game %}{% endblock %}">
-            <i class="fas fa-gamepad"></i> O'yin
-        </a>
-        <a href="#" class="nav-link {% block nav_hw %}{% endblock %}">
-            <i class="fas fa-clipboard-list"></i> Uy vazifasi
-        </a>
-        <a href="#" class="nav-link {% block nav_rating %}{% endblock %}">
-            <i class="fas fa-trophy"></i> Reyting
-        </a>
-        <a href="#" class="nav-link {% block nav_ai %}{% endblock %}">
-            <i class="fas fa-robot"></i> AI Mentor
-        </a>
-
+        <a href="{% url 'test_list' %}" class="nav-link {% block nav_test %}{% endblock %}"><i class="fas fa-tasks"></i> Testlar</a>
+        <a href="{% url 'game_lobby' %}" class="nav-link {% block nav_game %}{% endblock %}"><i class="fas fa-gamepad"></i> O'yin</a>
+        <a href="{% url 'homework_list' %}" class="nav-link {% block nav_hw %}{% endblock %}"><i class="fas fa-clipboard-list"></i> Uy vazifasi</a>
+        <a href="{% url 'rating' %}" class="nav-link {% block nav_rating %}{% endblock %}"><i class="fas fa-trophy"></i> Reyting</a>
+        <a href="{% url 'ai_mentor' %}" class="nav-link {% block nav_ai %}{% endblock %}"><i class="fas fa-robot"></i> AI Mentor</a>
         {% if request.user.is_teacher %}
         <div class="nav-section">O'qituvchi</div>
-        <a href="{% url 'video_upload' %}" class="nav-link {% block nav_upload %}{% endblock %}">
-            <i class="fas fa-upload"></i> Dars yuklash
-        </a>
-        <a href="{% url 'book_upload' %}" class="nav-link">
-            <i class="fas fa-book-medical"></i> Kitob yuklash
-        </a>
-        <a href="{% url 'formula_add' %}" class="nav-link">
-            <i class="fas fa-plus-circle"></i> Formula qo'shish
-        </a>
+        <a href="{% url 'video_upload' %}" class="nav-link {% block nav_upload %}{% endblock %}"><i class="fas fa-upload"></i> Dars yuklash</a>
+        <a href="{% url 'book_upload' %}" class="nav-link"><i class="fas fa-book-medical"></i> Kitob yuklash</a>
+        <a href="{% url 'formula_add' %}" class="nav-link"><i class="fas fa-plus-circle"></i> Formula qo'shish</a>
+        <a href="{% url 'test_create' %}" class="nav-link"><i class="fas fa-plus-square"></i> Test yaratish</a>
+        <a href="{% url 'homework_create' %}" class="nav-link"><i class="fas fa-clipboard-plus"></i> Vazifa berish</a>
         {% endif %}
-    </div>
-
-    <div style="position:absolute;bottom:0;width:100%;border-top:1px solid rgba(255,255,255,0.1);">
-        <a href="{% url 'logout' %}" class="nav-link" style="color:rgba(255,100,100,0.8);">
-            <i class="fas fa-sign-out-alt"></i> Chiqish
-        </a>
-    </div>
-</div>
-
-<!-- Kontent -->
-<div class="main-content">
-    <!-- Topbar -->
-    <div class="topbar">
-        <h5>{% block page_title %}MathLearn{% endblock %}</h5>
-        <div class="d-flex align-items-center gap-3">
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} py-1 px-3 mb-0" style="font-size:13px;">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-            <div class="text-end">
-                <div style="font-weight:600;font-size:14px;">
-                    {{ request.user.get_full_name|default:request.user.username }}
-                </div>
-                <div style="font-size:11px;color:#888;">
-                    {{ request.user.get_role_display }}
-                </div>
-            </div>
-            <div class="user-avatar">
-                {{ request.user.username|first|upper }}
-            </div>
+        <div style="border-top:1px solid rgba(255,255,255,0.1);margin-top:10px;padding-top:5px;">
+            <a href="{% url 'logout' %}" class="nav-link" style="color:rgba(255,100,100,0.8);"><i class="fas fa-sign-out-alt"></i> Chiqish</a>
         </div>
     </div>
-
+</div>
+<div class="main-content">
+    <div class="topbar">
+        <h5 class="topbar-title">{% block page_title %}MathLearn{% endblock %}</h5>
+        <form method="GET" action="{% url 'search' %}" class="search-form">
+            <div style="position:relative;">
+                <i class="fas fa-search" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#aaa;font-size:13px;pointer-events:none;"></i>
+                <input type="text" name="q" class="search-input" placeholder="Qidirish...">
+            </div>
+        </form>
+        <div class="topbar-right">
+            <a href="{% url 'notifications' %}" class="notif-btn">
+                <i class="fas fa-bell"></i>
+                {% if unread_notifications > 0 %}<span class="notif-badge">{{ unread_notifications }}</span>{% endif %}
+            </a>
+            <div class="text-end" style="line-height:1.3;">
+                <div class="user-name">{{ request.user.get_full_name|default:request.user.username }}</div>
+                <div class="user-role">{{ request.user.get_role_display }}</div>
+            </div>
+            <div class="user-avatar">{{ request.user.username|first|upper }}</div>
+        </div>
+    </div>
+    {% if messages %}
+    <div class="mb-3">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} py-2 px-3" style="font-size:13px;">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
     {% block content %}{% endblock %}
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 {% block extra_js %}{% endblock %}
 </body>

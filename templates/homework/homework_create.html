@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Vazifa berish — MathLearn{% endblock %}
+{% block nav_hw %}active{% endblock %}
+{% block page_title %}<i class="fas fa-plus me-2 text-danger"></i>Vazifa berish{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card-custom">
+            <h6><i class="fas fa-clipboard-list me-2 text-danger"></i>Yangi uy vazifasi</h6>
+            <form method="POST">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label style="font-weight:600;font-size:14px;color:#1a1a2e;">Vazifa sarlavhasi *</label>
+                        <input type="text" name="title" class="form-control mt-1" required style="border-radius:10px;border:1.5px solid #e0e0e0;padding:10px 14px;">
+                    </div>
+                    <div class="col-12">
+                        <label style="font-weight:600;font-size:14px;color:#1a1a2e;">Topshiriq *</label>
+                        <textarea name="description" class="form-control mt-1" rows="5" required style="border-radius:10px;border:1.5px solid #e0e0e0;padding:12px;"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label style="font-weight:600;font-size:14px;color:#1a1a2e;">Muddat *</label>
+                        <input type="datetime-local" name="deadline" class="form-control mt-1" required style="border-radius:10px;border:1.5px solid #e0e0e0;padding:10px 14px;">
+                    </div>
+                    <div class="col-md-3">
+                        <label style="font-weight:600;font-size:14px;color:#1a1a2e;">Maks. ball</label>
+                        <input type="number" name="max_score" value="100" class="form-control mt-1" style="border-radius:10px;border:1.5px solid #e0e0e0;padding:10px 14px;">
+                    </div>
+                    <div class="col-md-3">
+                        <label style="font-weight:600;font-size:14px;color:#1a1a2e;">Dars (ixtiyoriy)</label>
+                        <select name="video" class="form-select mt-1" style="border-radius:10px;border:1.5px solid #e0e0e0;padding:10px 14px;">
+                            <option value="">— Tanlang —</option>
+                            {% for video in videos %}
+                            <option value="{{ video.id }}">{{ video.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input type="checkbox" name="is_published" class="form-check-input" id="pub" checked>
+                            <label class="form-check-label" for="pub" style="font-weight:600;color:#1a1a2e;">Darhol chiqarish</label>
+                        </div>
+                    </div>
+                    <div class="col-12 d-flex gap-3">
+                        <button type="submit" class="btn-primary-custom btn">
+                            <i class="fas fa-save me-2"></i>Saqlash
+                        </button>
+                        <a href="{% url 'homework_list' %}" class="btn btn-outline-secondary" style="border-radius:10px;">Bekor qilish</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

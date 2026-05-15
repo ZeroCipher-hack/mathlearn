@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% block title %}{{ homework.title }} — MathLearn{% endblock %}
+{% block nav_hw %}active{% endblock %}
+{% block page_title %}<i class="fas fa-clipboard-list me-2 text-danger"></i>{{ homework.title }}{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card-custom mb-4">
+            <h6><i class="fas fa-info-circle me-2 text-danger"></i>Topshiriq</h6>
+            <p style="color:#555;line-height:1.8;font-size:15px;">{{ homework.description }}</p>
+            <div style="display:flex;gap:20px;font-size:13px;color:#888;margin-top:16px;padding-top:16px;border-top:1px solid #f0f2f5;">
+                <span><i class="fas fa-calendar me-1 text-danger"></i>Muddat: {{ homework.deadline|date:"d.m.Y H:i" }}</span>
+                <span><i class="fas fa-star me-1 text-warning"></i>Maks. ball: {{ homework.max_score }}</span>
+            </div>
+        </div>
+
+        {% if request.user.is_student %}
+            {% if submission %}
+                <div class="card-custom">
+                    <h6><i class="fas fa-check-circle me-2 text-success"></i>Sizning javobingiz</h6>
+                    <div style="background:#f8f9ff;border-radius:12px;padding:16px;margin-bottom:16px;font-size:14px;color:#555;line-height:1.7;">
+                        {{ submission.answer_text|default:"Fayl yuborildi" }}
+                    </div>
+                    <div style="display:flex;gap:15px;font-size:13px;">
+                        <span>
+                            Holat:
+                            {% if submission.status == 'checked' %}
+                                <span style="color:#28a745;font-weight:600;">✓ Tekshirildi</span>
+                            {% else %}
+                                <span style="color:#fd7e14;font-weight:600;">⏳ Kutilmoqda</span>
+                            {% endif %}
+                        </span>
+                        {% if submission.score is not None %}
+                        <span>Ball: <strong style="color:#e94560;">{{ submission.score }}/{{ homework.max_score }}</strong></span>
+                        {% endif %}
+                    </div>
+                    {% if submission.feedback %}
+                    <div style="margin-top:12px;background:#fff0f3;border-radius:10px;padding:12px;font-size:13px;color:#555;">
+                        <strong><i class="fas fa-comment me-1 text-danger"></i>O'qituvchi izohi:</strong><br>
+                        {{ submission.feedback }}
+                    </div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="card-custom">
+                    <h6><i class="fas fa-paper-plane me-2 text-danger"></i>Javobni yuborish</h6>
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label style="font-weight:600;font-size:14px;color:#1a1a2e;">Javob matni</label>
+                            <textarea name="answer_text" class="form-control mt-1" rows="6"
+                                      placeholder="Javobingizni shu yerga yozing..."
+                                      style="border-radius:10px;border:1.5px solid #e0e0e0;padding:12px;font-size:14px;"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label style="font-weight:600;font-size:14px;color:#1a1a2e;">Yoki fayl yuklang</label>
+                            <input type="file" name="answer_file" class="form-control mt-1" style="border-radius:10px;border:1.5px solid #e0e0e0;padding:10px;">
+                        </div>
+                        <button type="submit" class="btn-primary-custom btn">
+                            <i class="fas fa-paper-plane me-2"></i>Yuborish
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+        {% endif %}
+
+        {% if request.user.is_teacher %}
+        <div class="card-custom">
+            <h6><i class="fas fa-users me-2 text-danger"></i>Topshirganlar ({{ homework.submissions.count }})</h6>
+            {% for sub in homework.submissions.all %}
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f0f2f5;">
+                <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#e94560,#0f3460);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;">
+                    {{ sub.student.username|first|upper }}
+                </div>
+                <div style="flex:1;">
+                    <div style="font-weight:600;font-size:14px;color:#1a1a2e;">{{ sub.student.get_full_name|default:sub.student.username }}</div>
+                    <div style="font-size:12px;color:#888;">{{ sub.submitted_at|date:"d.m.Y H:i" }}</div>
+                </div>
+                <div>
+                    {% if sub.status == 'checked' %}
+                        <span style="color:#28a745;font-weight:600;font-size:13px;">{{ sub.score }} ball</span>
+                    {% else %}
+                        <a href="{% url 'submission_check' sub.pk %}" class="btn btn-sm" style="background:#fff0f3;color:#e94560;border-radius:8px;font-size:12px;">
+                            <i class="fas fa-check me-1"></i>Baholash
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div style="text-align:center;padding:20px;color:#ccc;">
+                Hali hech kim topshirmagan
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-4">
+        <div class="card-custom">
+            <h6><i class="fas fa-info me-2 text-danger"></i>Ma'lumot</h6>
+            <div style="font-size:13px;color:#555;">
+                <div style="padding:10px 0;border-bottom:1px solid #f0f2f5;">
+                    <span style="color:#888;">O'qituvchi:</span><br>
+                    <strong>{{ homework.teacher.get_full_name|default:homework.teacher.username }}</strong>
+                </div>
+                <div style="padding:10px 0;border-bottom:1px solid #f0f2f5;">
+                    <span style="color:#888;">Berilgan:</span><br>
+                    <strong>{{ homework.created_at|date:"d.m.Y" }}</strong>
+                </div>
+                <div style="padding:10px 0;border-bottom:1px solid #f0f2f5;">
+                    <span style="color:#888;">Muddat:</span><br>
+                    <strong style="color:#e94560;">{{ homework.deadline|date:"d.m.Y H:i" }}</strong>
+                </div>
+                <div style="padding:10px 0;">
+                    <span style="color:#888;">Maks. ball:</span><br>
+                    <strong>{{ homework.max_score }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

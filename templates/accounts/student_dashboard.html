@@ -10,7 +10,7 @@
             <div style="width:52px;height:52px;border-radius:14px;background:#fff0f3;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:15px;">
                 <i class="fas fa-play-circle" style="color:#e94560;"></i>
             </div>
-            <h3 style="font-size:28px;font-weight:700;margin:0;color:#1a1a2e;">0</h3>
+            <h3 style="font-size:28px;font-weight:700;margin:0;color:#1a1a2e;">{{ videos_watched }}</h3>
             <p style="color:#888;font-size:13px;margin:5px 0 0;">Ko'rilgan darslar</p>
         </div>
     </div>
@@ -19,7 +19,7 @@
             <div style="width:52px;height:52px;border-radius:14px;background:#f0f7ff;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:15px;">
                 <i class="fas fa-check-circle" style="color:#0f3460;"></i>
             </div>
-            <h3 style="font-size:28px;font-weight:700;margin:0;color:#1a1a2e;">0</h3>
+            <h3 style="font-size:28px;font-weight:700;margin:0;color:#1a1a2e;">{{ tests_done }}</h3>
             <p style="color:#888;font-size:13px;margin:5px 0 0;">Ishlangan testlar</p>
         </div>
     </div>
@@ -28,7 +28,7 @@
             <div style="width:52px;height:52px;border-radius:14px;background:#f0fff4;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:15px;">
                 <i class="fas fa-star" style="color:#28a745;"></i>
             </div>
-            <h3 style="font-size:28px;font-weight:700;margin:0;color:#1a1a2e;">0</h3>
+            <h3 style="font-size:28px;font-weight:700;margin:0;color:#1a1a2e;">{{ total_score }}</h3>
             <p style="color:#888;font-size:13px;margin:5px 0 0;">Umumiy ball</p>
         </div>
     </div>
@@ -37,7 +37,7 @@
             <div style="width:52px;height:52px;border-radius:14px;background:#fffbf0;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:15px;">
                 <i class="fas fa-fire" style="color:#fd7e14;"></i>
             </div>
-            <h3 style="font-size:28px;font-weight:700;margin:0;color:#1a1a2e;">0</h3>
+            <h3 style="font-size:28px;font-weight:700;margin:0;color:#1a1a2e;">{{ streak_days }}</h3>
             <p style="color:#888;font-size:13px;margin:5px 0 0;">Ketma-ket kunlar</p>
         </div>
     </div>
@@ -50,15 +50,15 @@
             {% if recent_videos %}
                 {% for video in recent_videos %}
                 <div style="display:flex;align-items:center;gap:15px;padding:12px 0;border-bottom:1px solid #f0f2f5;">
-                    <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#e94560,#0f3460);display:flex;align-items:center;justify-content:center;color:white;font-size:20px;flex-shrink:0;">
+                    <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#e94560,#0f3460);display:flex;align-items:center;justify-content:center;color:white;font-size:18px;flex-shrink:0;">
                         <i class="fas fa-play"></i>
                     </div>
                     <div style="flex:1;">
                         <div style="font-weight:600;color:#1a1a2e;font-size:14px;">{{ video.title }}</div>
-                        <div style="font-size:12px;color:#888;">{{ video.category.name|default:"Umumiy" }}</div>
+                        <div style="font-size:12px;color:#888;">{{ video.category.name|default:"Umumiy" }} · <i class="fas fa-eye me-1"></i>{{ video.views }}</div>
                     </div>
-                    <a href="{% url 'video_detail' video.pk %}" class="btn btn-sm" style="background:#fff0f3;color:#e94560;border-radius:8px;">
-                        <i class="fas fa-play"></i>
+                    <a href="{% url 'video_detail' video.pk %}" class="btn btn-sm" style="background:#fff0f3;color:#e94560;border-radius:8px;font-size:12px;">
+                        <i class="fas fa-play me-1"></i>Ko'rish
                     </a>
                 </div>
                 {% endfor %}
@@ -71,18 +71,24 @@
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card-custom">
+        <div class="card-custom mb-4">
             <h6><i class="fas fa-trophy me-2 text-warning"></i>Top o'quvchilar</h6>
             {% if top_students %}
-                {% for student in top_students %}
+                {% for r in top_students %}
                 <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0f2f5;">
-                    <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#e94560,#0f3460);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;">
-                        {{ student.username|first|upper }}
+                    <div style="width:28px;text-align:center;font-weight:700;font-size:14px;">
+                        {% if forloop.counter == 1 %}🥇
+                        {% elif forloop.counter == 2 %}🥈
+                        {% elif forloop.counter == 3 %}🥉
+                        {% else %}{{ forloop.counter }}{% endif %}
+                    </div>
+                    <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#e94560,#0f3460);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0;">
+                        {{ r.student.username|first|upper }}
                     </div>
                     <div style="flex:1;">
-                        <div style="font-weight:600;font-size:13px;color:#1a1a2e;">{{ student.get_full_name|default:student.username }}</div>
+                        <div style="font-weight:600;font-size:13px;color:#1a1a2e;">{{ r.student.get_full_name|default:r.student.username }}</div>
                     </div>
-                    <span style="font-weight:700;color:#e94560;">{{ student.total_score|default:0 }}</span>
+                    <span style="font-weight:700;color:#e94560;font-size:14px;">{{ r.total_score }}</span>
                 </div>
                 {% endfor %}
             {% else %}
@@ -93,10 +99,10 @@
             {% endif %}
         </div>
 
-        <div class="card-custom mt-4">
+        <div class="card-custom">
             <h6><i class="fas fa-robot me-2" style="color:#6f42c1;"></i>AI Mentor</h6>
             <p style="font-size:13px;color:#888;margin-bottom:15px;">Savolingiz bormi? AI mentor yordam beradi!</p>
-            <a href="#" class="btn-primary-custom btn w-100">
+            <a href="{% url 'ai_mentor' %}" class="btn-primary-custom btn w-100">
                 <i class="fas fa-comments me-2"></i>Savol berish
             </a>
         </div>

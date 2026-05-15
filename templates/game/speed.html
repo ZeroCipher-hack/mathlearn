@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% block title %}⚡ Tezlik Poygasi — {{ test.title }}{% endblock %}
+{% block nav_game %}active{% endblock %}
+{% block page_title %}<i class="fas fa-bolt me-2 text-warning"></i>Tezlik Poygasi{% endblock %}
+
+{% block extra_css %}
+<style>
+@keyframes pop { 0%{transform:scale(0.85);opacity:0} 100%{transform:scale(1);opacity:1} }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+@keyframes timerPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+.choice-btn {
+    padding:14px 18px; border-radius:14px; border:none; font-size:14px;
+    font-weight:600; cursor:pointer; transition:all 0.15s; width:100%;
+    text-align:left; color:white;
+}
+.choice-btn:hover:not(:disabled) { filter:brightness(1.12); transform:scale(1.02); }
+#timerBar { transition: width 0.1s linear; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:720px;margin:0 auto;">
+
+    <!-- Header -->
+    <div class="card-custom mb-3" style="background:linear-gradient(135deg,#fd7e14,#e94560);padding:18px 24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+                <div style="color:rgba(255,255,255,0.7);font-size:11px;text-transform:uppercase;letter-spacing:1px;">Savol</div>
+                <div id="qNum" style="color:white;font-size:20px;font-weight:700;">1 / 1</div>
+            </div>
+            <div style="text-align:center;">
+                <div id="timerNum" style="font-size:48px;font-weight:700;color:white;font-family:monospace;line-height:1;">15</div>
+                <div style="color:rgba(255,255,255,0.6);font-size:11px;">soniya</div>
+            </div>
+            <div style="text-align:right;">
+                <div style="color:rgba(255,255,255,0.7);font-size:11px;text-transform:uppercase;letter-spacing:1px;">Ball</div>
+                <div id="scoreEl" style="color:white;font-size:20px;font-weight:700;">0</div>
+            </div>
+        </div>
+        <!-- Timer bar -->
+        <div style="margin-top:12px;background:rgba(255,255,255,0.2);border-radius:4px;height:6px;">
+            <div id="timerBar" style="background:white;height:6px;border-radius:4px;width:100%;"></div>
+        </div>
+    </div>
+
+    <!-- Savol -->
+    <div id="questionCard" class="card-custom mb-3" style="animation:pop 0.3s;">
+        <div style="text-align:center;padding:8px 0 20px;">
+            <h4 id="questionText" style="color:#1a1a2e;font-weight:700;line-height:1.6;margin:0;font-size:18px;"></h4>
+        </div>
+        <div id="choices" class="row g-3"></div>
+    </div>
+
+    <!-- Natija -->
+    <div id="resultScreen" style="display:none;">
+        <div class="card-custom text-center py-5">
+            <div id="resultEmoji" style="font-size:80px;margin-bottom:12px;"></div>
+            <h3 id="resultTitle" style="font-weight:700;margin-bottom:8px;"></h3>
+            <div id="resultScore" style="font-size:56px;font-weight:700;color:#fd7e14;margin:16px 0;line-height:1;"></div>
+            <p id="resultDetail" style="color:#888;font-size:14px;margin-bottom:24px;"></p>
+            <div class="d-flex gap-3 justify-content-center">
+                <a href="{% url 'game_lobby' %}" class="btn btn-outline-secondary" style="border-radius:10px;padding:10px 20px;">
+                    <i class="fas fa-arrow-left me-2"></i>Orqaga
+                </a>
+                <button onclick="location.reload()" class="btn-primary-custom btn">
+                    <i class="fas fa-redo me-2"></i>Qayta
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const questionsData = {{ questions_json|safe }};
+const colors = ['#e94560','#0f3460','#28a745','#6f42c1'];
+const letters = ['A','B','C','D'];
+const TIME_PER_Q = 15;
+
+let current = 0, score = 0, correctCount = 0, answered = false;
+const total = questionsData.length;
+let questionTimer = null;
+let timeLeft = TIME_PER_Q;
+
+function showQuestion() {
+    if (current >= total) { showResult(); return; }
+    answered = false;
+    timeLeft = TIME_PER_Q;
+
+    const q = questionsData[current];
+    document.getElementById('qNum').textContent = `${current+1} / ${total}`;
+    document.getElementById('questionText').textContent = q.text;
+
+    const ch = document.getElementById('choices');
+    ch.innerHTML = '';
+    q.choices.forEach((c, i) => {
+        const col = document.createElement('div');
+        col.className = 'col-6';
+        col.innerHTML = `<button class="choice-btn" data-correct="${c.correct}"
+            style="background:${colors[i%colors.length]};"
+            onclick="selectAnswer(this,${c.correct})">
+            <span style="display:inline-block;width:24px;height:24px;border-radius:6px;background:rgba(255,255,255,0.2);text-align:center;line-height:24px;font-size:12px;margin-right:8px;">${letters[i]}</span>${c.text}
+        </button>`;
+        ch.appendChild(col);
+    });
+
+    document.getElementById('questionCard').style.animation = 'none';
+    setTimeout(() => document.getElementById('questionCard').style.animation = 'pop 0.3s', 10);
+
+    clearInterval(questionTimer);
+    questionTimer = setInterval(() => {
+        timeLeft--;
+        document.getElementById('timerNum').textContent = timeLeft;
+        document.getElementById('timerBar').style.width = (timeLeft/TIME_PER_Q*100)+'%';
+        if (timeLeft <= 5) {
+            document.getElementById('timerNum').style.animation = 'timerPulse 0.5s infinite';
+            document.getElementById('timerBar').style.background = '#e94560';
+        }
+        if (timeLeft <= 0) {
+            clearInterval(questionTimer);
+            if (!answered) {
+                answered = true;
+                document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+                showFeedback('⏰ Vaqt tugadi!', '#888');
+                document.querySelectorAll('.choice-btn').forEach(b => {
+                    if (b.dataset.correct === 'true') b.style.boxShadow = '0 0 0 4px white';
+                });
+                setTimeout(() => { current++; showQuestion(); }, 1500);
+            }
+        }
+    }, 1000);
+}
+
+function selectAnswer(btn, isCorrect) {
+    if (answered) return;
+    answered = true;
+    clearInterval(questionTimer);
+    document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+
+    if (isCorrect) {
+        const bonus = Math.max(50, timeLeft * 20);
+        score += bonus;
+        correctCount++;
+        document.getElementById('scoreEl').textContent = score;
+        btn.style.boxShadow = '0 0 0 4px rgba(255,255,255,0.8)';
+        showFeedback(`⚡ To'g'ri! +${bonus} ball`, '#28a745');
+    } else {
+        btn.style.opacity = '0.5';
+        showFeedback('❌ Noto\'g\'ri!', '#e94560');
+        document.querySelectorAll('.choice-btn').forEach(b => {
+            if (b.dataset.correct === 'true') b.style.boxShadow = '0 0 0 4px rgba(255,255,255,0.8)';
+        });
+    }
+    setTimeout(() => { current++; showQuestion(); }, 1500);
+}
+
+function showFeedback(msg, color) {
+    const old = document.getElementById('fb');
+    if (old) old.remove();
+    const el = document.createElement('div');
+    el.id = 'fb';
+    el.textContent = msg;
+    el.style.cssText = `position:fixed;top:80px;left:50%;transform:translateX(-50%);background:${color};color:white;padding:12px 28px;border-radius:50px;font-weight:700;font-size:16px;z-index:9999;animation:pop 0.3s;box-shadow:0 4px 20px rgba(0,0,0,0.2);white-space:nowrap;`;
+    document.body.appendChild(el);
+    setTimeout(() => el && el.remove(), 1400);
+}
+
+function showResult() {
+    document.getElementById('questionCard').style.display = 'none';
+    document.getElementById('resultScreen').style.display = 'block';
+    const pct = total > 0 ? Math.round(correctCount/total*100) : 0;
+    document.getElementById('resultEmoji').textContent = pct>=80?'🏆':pct>=50?'👍':'📚';
+    document.getElementById('resultTitle').textContent = pct>=80?'Ajoyib tezlik!':pct>=50?'Yaxshi!':'Ko\'proq mashq!';
+    document.getElementById('resultTitle').style.color = pct>=80?'#28a745':pct>=50?'#fd7e14':'#e94560';
+    document.getElementById('resultScore').textContent = score + ' ball';
+    document.getElementById('resultDetail').textContent = `${correctCount}/${total} to'g'ri · ${pct}%`;
+}
+
+showQuestion();
+</script>
+{% endblock %}
